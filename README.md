@@ -14,8 +14,9 @@ Pynk is a powerful tool designed to help you analyze and visualize network stati
 - Real-time monitoring capabilities
 
 ## Initial configuration
-
-TBA
+1. Your machnine should have an `traceroute` tool, you can install it by using `sudo apt install traceroute -y`
+2. Only supported host operating systems are Linux and MacOS.
+-- TBA
 ## Installation
 
 TBA

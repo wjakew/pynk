@@ -76,6 +76,9 @@ public class Pynk {
      */
     static void initDatabase(String databasePath) {
         databaseEngine = new DatabaseEngine(databasePath);
+        databaseEngine.connect();
+        databaseEngine.createDatabase();
+        databaseEngine.closeConnection();
     }
 
     /**

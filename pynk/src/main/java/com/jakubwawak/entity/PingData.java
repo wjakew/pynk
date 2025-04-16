@@ -33,7 +33,7 @@ public class PingData {
     public double packetHopTime8;
     public String packetDigData;
     public String packetTracertData;
-
+    public String packetRawPing;
     public double packetRoundTripTimeMin;
     public double packetRoundTripTimeMax;
     public double packetRoundTripTimeAvg;
@@ -64,6 +64,7 @@ public class PingData {
         this.packetRoundTripTimeMin = -1;
         this.packetRoundTripTimeMax = -1;
         this.packetRoundTripTimeAvg = -1;
+        this.packetRawPing = null;
     }
 
     /**
@@ -92,7 +93,7 @@ public class PingData {
                     double packetHopTime4, double packetHopTime5, double packetHopTime6,
                     double packetHopTime7, double packetHopTime8, String packetDigData,
                     String packetTracertData, double packetRoundTripTimeMin,
-                    double packetRoundTripTimeMax, double packetRoundTripTimeAvg) {
+                    double packetRoundTripTimeMax, double packetRoundTripTimeAvg, String packetRawPing) {
         this.pingId = pingId;
         this.hostId = hostId;
         this.pingTimestamp = pingTimestamp;
@@ -113,6 +114,7 @@ public class PingData {
         this.packetRoundTripTimeMin = packetRoundTripTimeMin;
         this.packetRoundTripTimeMax = packetRoundTripTimeMax;
         this.packetRoundTripTimeAvg = packetRoundTripTimeAvg;
+        this.packetRawPing = packetRawPing;
     }
 
     /**
@@ -142,6 +144,7 @@ public class PingData {
             this.packetRoundTripTimeMin = resultSet.getDouble("packet_round_trip_time_min");
             this.packetRoundTripTimeMax = resultSet.getDouble("packet_round_trip_time_max");
             this.packetRoundTripTimeAvg = resultSet.getDouble("packet_round_trip_time_avg");
+            this.packetRawPing = resultSet.getString("packet_raw_ping");
         } catch (SQLException e) {
             this.error = true;
             Pynk.databaseEngine.addLog("error", "Error: " + e.getMessage(), "error", "#FF0000");
@@ -154,6 +157,14 @@ public class PingData {
      */
     public void setHostId(int hostId){
         this.hostId = hostId;
+    }
+
+    /**
+     * Set packet raw ping
+     * @param packetRawPing
+     */
+    public void setPacketRawPing(String packetRawPing){
+        this.packetRawPing = packetRawPing;
     }
 
     /**
@@ -351,8 +362,13 @@ public class PingData {
             this.packetStatusColorHex = "#0000FF";
         }
         if ( this.packetReceived == this.packetTransmitted ){
-            this.packetStatusCode = "Success";
-            this.packetStatusColorHex = "#00FF00";
+            if ( hasValidPacketHopTimes() ){
+                this.packetStatusCode = "Success";
+                this.packetStatusColorHex = "#00FF00";
+            } else {
+                this.packetStatusCode = "Partial loss";
+                this.packetStatusColorHex = "#FFA500";
+            }
         }
     }
 }

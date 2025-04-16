@@ -36,6 +36,7 @@ public class PingEngine {
      */
     public PingData pingHost(String host, int count) {
         PingData pingData = new PingData();
+        String rawPing = "";
         Pynk.databaseEngine.addLog("job", "Pinging host: " + host + " with " + count + " packets", "info", "#0000FF");
         try {
             ProcessBuilder pb = new ProcessBuilder("ping", "-c", String.valueOf(count), host);
@@ -48,6 +49,7 @@ public class PingEngine {
                     new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    rawPing += line + "\n";
                     if ( line.contains("icmp_seq") ){
                         try{
                             String raw_index = line.split(" ")[4];
@@ -67,6 +69,7 @@ public class PingEngine {
                         pingData.setPacketRoundTripTimeMax(data.split("/")[2]);
                         pingData.setPacketRoundTripTimeAvg(data.split("/")[1]);
                     }
+
                 }
             }
             if ( pingData.verifyPacketHopTimes() ){
@@ -83,6 +86,7 @@ public class PingEngine {
             Pynk.databaseEngine.addLog("error", "Error: " + e.getMessage(), "error", "#FF0000");
         }
         pingData.setClassification();
+        pingData.setPacketRawPing(rawPing);
         return pingData;
     }
 

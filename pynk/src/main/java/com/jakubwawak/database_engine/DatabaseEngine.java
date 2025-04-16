@@ -46,7 +46,6 @@ public class DatabaseEngine {
                 connection.close();
             }
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-            createDatabase();
             connected = true;
         } catch (SQLException e) {
             connected = false;
@@ -103,7 +102,7 @@ public class DatabaseEngine {
     /**
      * Method to create the database
      */
-    private void createDatabase() {
+    public void createDatabase() {
         System.out.println("Creating/Checking database");
 
         if (!doesTableExist("app_log")) {
@@ -159,7 +158,8 @@ public class DatabaseEngine {
                     "packet_round_trip_time_max DOUBLE, " +
                     "packet_round_trip_time_avg DOUBLE, " +
                     "packet_dig_data TEXT, " +
-                    "packet_tracert_data TEXT);");
+                    "packet_tracert_data TEXT, " +
+                    "packet_raw_ping TEXT);");
         }
 
 
@@ -233,7 +233,7 @@ public class DatabaseEngine {
         pstmt.setDouble(17, pingData.packetRoundTripTimeAvg);
         pstmt.setString(18, pingData.packetDigData);
         pstmt.setString(19, pingData.packetTracertData);
-        
+        pstmt.setString(20, pingData.packetRawPing);
         pstmt.executeUpdate();
 
         addLog("info", "Ping data added to database", "info", ConsoleColors.GREEN_BOLD);
