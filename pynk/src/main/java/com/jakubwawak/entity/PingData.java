@@ -149,6 +149,14 @@ public class PingData {
     }
 
     /**
+     * Set host ID
+     * @param hostId
+     */
+    public void setHostId(int hostId){
+        this.hostId = hostId;
+    }
+
+    /**
      * Set ping timestamp
      */
     public void setTime(){

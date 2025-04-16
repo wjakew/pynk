@@ -9,12 +9,24 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import com.jakubwawak.Pynk;
+import com.jakubwawak.entity.Host;
 import com.jakubwawak.entity.PingData;
 
 /**
  * Ping engine class
  */
 public class PingEngine {
+
+    /**
+     * Ping a host
+     * @param host
+     * @return PingData
+     */
+    public PingData pingHost(Host host){
+        PingData pingData = pingHost(host.getHostIp(), 8);
+        pingData.setHostId(host.getHostId());
+        return pingData;
+    }
 
     /**
      * Ping a host
@@ -82,7 +94,7 @@ public class PingEngine {
     private String traceHost(String host) {
         StringBuilder result = new StringBuilder();
         try {
-            ProcessBuilder pb = new ProcessBuilder("traceroute", host);
+            ProcessBuilder pb = new ProcessBuilder("traceroute", "-m", "10", "-q", "1", "-w", "2", host);
             Process process = pb.start();
 
             try (BufferedReader reader = new BufferedReader(
