@@ -36,7 +36,7 @@ public class Host {
         this.hostCategory = hostCategory;
         this.hostDescription = hostDescription;
         this.hostStatus = hostStatus;
-        this.hostJobTime = hostJobTime;
+        this.hostJobTime = hostJobTime; // in miliseconds
     }
 
     /**

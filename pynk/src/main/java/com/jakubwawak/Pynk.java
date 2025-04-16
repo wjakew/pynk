@@ -48,7 +48,7 @@ public class Pynk {
                             Pynk.databaseEngine.addHostLog(host.getHostId(), "thread-job", "Job " + jobNumber + " for host " + host.getHostName() + " completed", "info", "#0000FF");
                             jobNumber++;
                             try {
-                                Thread.sleep(host.getHostJobTime() * 60 * 1000); // Convert minutes to milliseconds
+                                Thread.sleep(host.getHostJobTime()); // time in miliseconds
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 break; // Exit the loop if interrupted

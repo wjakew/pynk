@@ -129,11 +129,11 @@ public class DatabaseEngine {
                     "host_status VARCHAR(20), " +
                     "host_job_time INTEGER);");
 
-            createHostEntry("localhost", "127.0.0.1", "local", "Localhost", 1, "active");
+            createHostEntry("localhost", "127.0.0.1", "local", "Localhost", 30000, "active");
             addLog("info", "Localhost added", "info", ConsoleColors.GREEN_BOLD);
-            createHostEntry("google.com", "8.8.8.8", "public", "Google DNS", 1, "active");
+            createHostEntry("google.com", "8.8.8.8", "public", "Google DNS", 30000, "active");
             addLog("info", "Google DNS added", "info", ConsoleColors.GREEN_BOLD);
-            createHostEntry("cloudflare.com", "1.1.1.1", "public", "Cloudflare DNS", 1, "active");
+            createHostEntry("cloudflare.com", "1.1.1.1", "public", "Cloudflare DNS", 30000, "active");
             addLog("info", "Cloudflare DNS added", "info", ConsoleColors.GREEN_BOLD);
         }
 
