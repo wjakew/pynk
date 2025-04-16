@@ -212,7 +212,7 @@ public class DatabaseEngine {
      * @param pingData
      */
     public void addPingData(PingData pingData){
-    String sql = "INSERT INTO ping_history (host_id, ping_timestamp, packet_status_code, packet_status_color_hex, packet_transmitted, packet_received, packet_hop_time1, packet_hop_time2, packet_hop_time3, packet_hop_time4, packet_hop_time5, packet_hop_time6, packet_hop_time7, packet_hop_time8, packet_round_trip_time_min, packet_round_trip_time_max, packet_round_trip_time_avg, packet_dig_data, packet_tracert_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    String sql = "INSERT INTO ping_history (host_id, ping_timestamp, packet_status_code, packet_status_color_hex, packet_transmitted, packet_received, packet_hop_time1, packet_hop_time2, packet_hop_time3, packet_hop_time4, packet_hop_time5, packet_hop_time6, packet_hop_time7, packet_hop_time8, packet_round_trip_time_min, packet_round_trip_time_max, packet_round_trip_time_avg, packet_dig_data, packet_tracert_data, packet_raw_ping) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
         pstmt.setInt(1, pingData.hostId);
         pstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
