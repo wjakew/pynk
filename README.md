@@ -1,0 +1,42 @@
+# Pynk
+
+System for generating and analyzing network statistics.
+
+## Description
+
+Pynk is a powerful tool designed to help you analyze and visualize network statistics. It provides insights into network performance, traffic patterns, and other relevant metrics.
+
+## Features
+
+- Network traffic analysis
+- Statistical data generation
+- Performance metrics visualization
+- Real-time monitoring capabilities
+
+## Initial configuration
+
+TBA
+## Installation
+
+TBA
+
+## Project Structure
+
+```
+pynk/
+├── README.md
+└── pynk - service for analyzing and analitics generation
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.
+
+
+## Contact
+
+[Contact information to be added]

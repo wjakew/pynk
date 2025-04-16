@@ -1,0 +1,33 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.2.2 Chrome/134.0.6998.178 Electron/35.1.2 Safari/537.36" version="26.2.2">
+  <diagram name="Page-1" id="GXOkxAwJDbFfmat-x1hi">
+    <mxGraphModel dx="1308" dy="929" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-1" value="host_data" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="215" y="325" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="ICRbKT_Gg29HCFskCI_T-1" source="ICRbKT_Gg29HCFskCI_T-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="50" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-2" value="&lt;div&gt;host_id INT&lt;/div&gt;host_name VARCHAR(300)&lt;div&gt;host_ip VARCHAR(300)&lt;/div&gt;&lt;div&gt;host_category VARCHAR(300)&lt;/div&gt;&lt;div&gt;host_description TEXT&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="ICRbKT_Gg29HCFskCI_T-1">
+          <mxGeometry y="26" width="220" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-11" value="ping_history" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="535" y="320" width="350" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-12" value="ping_id INT&lt;div&gt;host_id INT&lt;/div&gt;&lt;div&gt;ping_timestamp TIMESTAMP&lt;/div&gt;&lt;div&gt;packet_transmitted INT&lt;/div&gt;&lt;div&gt;packet_recived INT&lt;/div&gt;&lt;div&gt;packet_hop_time1 double&lt;/div&gt;&lt;div&gt;packet_hop_time2 double&lt;/div&gt;&lt;div&gt;packet_hop_time3 double&lt;/div&gt;&lt;div&gt;packet_hop_time4 double&lt;/div&gt;&lt;div&gt;packet_hop_time5 double&lt;/div&gt;&lt;div&gt;packet_hop_time6 double&lt;/div&gt;&lt;div&gt;packet_hop_time7 double&lt;/div&gt;&lt;div&gt;packet_hop_time8 double&lt;/div&gt;&lt;div&gt;packet_dig_data TEXT&lt;/div&gt;&lt;div&gt;packet_tracert_data TEXT&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="ICRbKT_Gg29HCFskCI_T-11">
+          <mxGeometry y="26" width="350" height="264" as="geometry" />
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-13" value="Classname" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="620" width="355" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ICRbKT_Gg29HCFskCI_T-14" value="+ field: type" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="ICRbKT_Gg29HCFskCI_T-13">
+          <mxGeometry y="26" width="355" height="134" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
