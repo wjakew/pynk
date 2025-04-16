@@ -29,14 +29,14 @@ public class Job {
      * Run the job
      */
     public void run(){
-        this.databaseEngine = new DatabaseEngine(Pynk.properties.getValue("databasePath"));
+        databaseEngine = new DatabaseEngine(Pynk.properties.getValue("databasePath"));
         databaseEngine.connect();
-        Pynk.databaseEngine.addLog("job", "Starting job for host: " + host.getHostName(), "info", "#0000FF");
+        databaseEngine.addLog("job", "Starting job for host: " + host.getHostName(), "info", "#0000FF");
         PingEngine pingEngine = new PingEngine();
         PingData pingData = pingEngine.pingHost(host);
-        Pynk.databaseEngine.addPingData(pingData);
-        Pynk.databaseEngine.addLog("job", "Job for host: " + host.getHostName() + " completed", "info", "#0000FF");
-        Pynk.databaseEngine.closeConnection();
+        databaseEngine.addPingData(pingData);
+        databaseEngine.addLog("job", "Job for host: " + host.getHostName() + " completed", "info", "#0000FF");
+        databaseEngine.closeConnection();
     }
     
 }
