@@ -273,31 +273,62 @@ public class PingData {
     public void setPacketHopTime(String data, int index) {
         try{
             double packetHopTime = Double.parseDouble(data);
-            switch (index) {
-                case 0:
-                    this.packetHopTime1 = packetHopTime;
-                    break;
-                case 1:
-                    this.packetHopTime2 = packetHopTime;
-                    break;
-                case 2:
-                    this.packetHopTime3 = packetHopTime;
-                    break;
-                case 3:
-                    this.packetHopTime4 = packetHopTime;
-                    break;
-                case 4:
-                    this.packetHopTime5 = packetHopTime;
-                    break;
-                case 5:
-                    this.packetHopTime6 = packetHopTime;
-                    break;
-                case 6:
-                    this.packetHopTime7 = packetHopTime;
-                    break;
-                case 7:
-                    this.packetHopTime8 = packetHopTime;
-                    break;
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("nix") || os.contains("nux")) {
+                // Unix/Linux specific handling if needed
+                switch (index) {
+                    case 1:
+                        this.packetHopTime1 = packetHopTime;
+                        break;
+                    case 2:
+                        this.packetHopTime2 = packetHopTime;
+                        break;
+                    case 3:
+                        this.packetHopTime3 = packetHopTime;
+                        break;
+                    case 4:
+                        this.packetHopTime4 = packetHopTime;
+                        break;
+                    case 5:
+                        this.packetHopTime5 = packetHopTime;
+                        break;
+                    case 6:
+                        this.packetHopTime6 = packetHopTime;
+                        break;
+                    case 7:
+                        this.packetHopTime7 = packetHopTime;
+                        break;
+                    case 8:
+                        this.packetHopTime8 = packetHopTime;
+                        break;
+                }
+            } else if (os.contains("mac")) {
+                switch (index) {
+                    case 0:
+                        this.packetHopTime1 = packetHopTime;
+                        break;
+                    case 1:
+                        this.packetHopTime2 = packetHopTime;
+                        break;
+                    case 2:
+                        this.packetHopTime3 = packetHopTime;
+                        break;
+                    case 3:
+                        this.packetHopTime4 = packetHopTime;
+                        break;
+                    case 4:
+                        this.packetHopTime5 = packetHopTime;
+                        break;
+                    case 5:
+                        this.packetHopTime6 = packetHopTime;
+                        break;
+                    case 6:
+                        this.packetHopTime7 = packetHopTime;
+                        break;
+                    case 7:
+                        this.packetHopTime8 = packetHopTime;
+                        break;
+                }
             }
         } catch (Exception e) {
             this.error = true;

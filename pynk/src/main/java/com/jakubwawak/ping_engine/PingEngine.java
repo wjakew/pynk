@@ -61,7 +61,7 @@ public class PingEngine {
                         pingData.setPacketTransmitted(line.split(" ")[0]);
                         pingData.setPacketReceived(line.split(" ")[3]);
                     }
-                    else if ( line.contains("round-trip") ){
+                    else if ( line.contains("round-trip") || line.contains("rtt") ){
                         String data = line.split("=")[1].stripLeading().stripTrailing();
                         pingData.setPacketRoundTripTimeMin(data.split("/")[0]);
                         pingData.setPacketRoundTripTimeMax(data.split("/")[2]);
