@@ -55,7 +55,6 @@ public class HeaderComponent extends HorizontalLayout {
         manageHostsButton.addClickListener(event -> {
             parent.hostManagementComponent.setVisible(!parent.hostManagementComponent.isVisible());
             parent.hostManagementComponent.refreshContent();
-            Notification.show("Host Management Component Visible: " + parent.hostManagementComponent.isVisible());
         });
 
         dataButton = new Button("Data",VaadinIcon.DATABASE.create());

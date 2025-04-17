@@ -90,10 +90,13 @@ public class HostManagementComponent extends VerticalLayout{
         addHostButton = new Button("Add Host",VaadinIcon.PLUS.create());
         addHostButton.addClassName("header-button");
 
+        addHostButton.getStyle().set("margin-right", "10px");
+
         refreshButton = new Button("",VaadinIcon.REFRESH.create());
         refreshButton.addClassName("header-button");
         refreshButton.addClickListener(event -> {
             refreshContent();
+            Notification.show("Hosts refreshed");
         });
 
         H4 logo = new H4("hosts");
@@ -133,7 +136,7 @@ public class HostManagementComponent extends VerticalLayout{
                 }
             });
             return textField;
-        })).setHeader("Job Time");
+        })).setHeader("Job Time (ms)");
 
         hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
             ComboBox<String> comboBox = new ComboBox<>();
@@ -152,7 +155,10 @@ public class HostManagementComponent extends VerticalLayout{
 
         hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
             ComboBox<String> comboBox = new ComboBox<>();
-            comboBox.setItems(databaseEngine.getAllUniqueHostStatuses());
+            ArrayList<String> statuses = new ArrayList<>();
+            statuses.add("active");
+            statuses.add("inactive");
+            comboBox.setItems(statuses);
             comboBox.setValue(host.getHostStatus());
             comboBox.setWidth("100%");
             comboBox.setReadOnly(false);
