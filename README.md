@@ -27,6 +27,7 @@ TBA
 pynk/
 ├── README.md
 └── pynk - service for analyzing and analitics generation
+└── pynk_web - web application for data monitoring
 ```
 
 ## Contributing
