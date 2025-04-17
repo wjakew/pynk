@@ -15,6 +15,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -23,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.value.ValueChangeMode;
 
 /**
  * Host Management Component
@@ -34,7 +36,7 @@ public class HostManagementComponent extends VerticalLayout{
 
     DatabaseEngine databaseEngine;
 
-    Button addHostButton;
+    Button addHostButton,refreshButton;
 
     FlexLayout leftLayout,rightLayout;
     TextField searchTextField;
@@ -88,17 +90,47 @@ public class HostManagementComponent extends VerticalLayout{
         addHostButton = new Button("Add Host",VaadinIcon.PLUS.create());
         addHostButton.addClassName("header-button");
 
+        refreshButton = new Button("",VaadinIcon.REFRESH.create());
+        refreshButton.addClassName("header-button");
+        refreshButton.addClickListener(event -> {
+            refreshContent();
+        });
+
         H4 logo = new H4("hosts");
         logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
+
+        GridListDataView<Host> dataView = hostGrid.setItems(content);
+
+        dataView.addFilter(host -> {
+            if (searchTextField.getValue() == null || searchTextField.getValue().isEmpty()){
+                return true;
+            }
+            boolean result = false;
+            if (host.getHostName().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostIp().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostCategory().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostStatus().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            return result;
+        });
 
         searchTextField = new TextField();
         searchTextField.setWidth("100%");
         searchTextField.setPlaceholder("search");
         searchTextField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchTextField.getStyle().set("margin-left", "20px");
+        searchTextField.setValueChangeMode(ValueChangeMode.EAGER);
+        searchTextField.addValueChangeListener(e -> dataView.refreshAll());
 
-        rightLayout.add(addHostButton,searchTextField);
+        rightLayout.add(addHostButton,refreshButton);
         leftLayout.add(logo,searchTextField);
 
         headerLayout.add(leftLayout,rightLayout);
