@@ -1,0 +1,38 @@
+/* fonts */
+@font-face {
+    font-family: 'header-font';
+    src: url('./PlaywriteRO-VariableFont_wght.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'body-font';
+    src: url('./PlayfairDisplay-Italic-VariableFont_wght.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+/* global variables */
+:root {
+    --header-font: 'header-font', sans-serif; 
+    --body-font: 'body-font', serif; 
+
+    --pink-color:#FB9EC6;
+}
+/*pages*/
+.page {
+    background-color: white;
+}
+/*components*/
+.logo{
+    font-family: var(--header-font);
+    color: var(--pink-color);
+    font-size: 2rem;
+}
+.header-button{
+    background-color: var(--pink-color);
+    color: white;
+    font-family: var(--header-font);
+}
+.header{
+
+}

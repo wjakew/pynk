@@ -105,4 +105,18 @@ public class Host {
     public void setHostDescription(String hostDescription) {
         this.hostDescription = hostDescription;
     }
+
+    public void setHostJobTime(int hostJobTime){
+        this.hostJobTime = hostJobTime;
+    }
+
+    public String getHostStatus(){
+        return hostStatus;
+    }
+
+    public void setHostStatus(String hostStatus){
+        this.hostStatus = hostStatus;
+    }
+    
+    
 }

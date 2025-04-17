@@ -100,6 +100,79 @@ public class DatabaseEngine {
     }
 
     /**
+     * Method to add a host to the database
+     * @param host
+     * @return number of rows affected
+     */
+    public int addHost(Host host){
+        return executeSQL("INSERT INTO host_data (host_name, host_ip, host_category, host_description,host_status, host_job_time) VALUES ('" + host.getHostName() + "', '" + host.getHostIp() + "', '" + host.getHostCategory() + "', '" + host.getHostDescription() + "', '" + host.getHostStatus() + "', " + host.getHostJobTime() + ");");
+    }
+
+    /**
+     * Method to update a host in the database
+     * @param host
+     * @return number of rows affected
+     */
+    public int updateHost(Host host){
+        return executeSQL("UPDATE host_data SET host_name = '" + host.getHostName() + "', host_ip = '" + host.getHostIp() + "', host_category = '" + host.getHostCategory() + "', host_description = '" + host.getHostDescription() + "', host_status = '" + host.getHostStatus() + "', host_job_time = " + host.getHostJobTime() + " WHERE host_id = " + host.getHostId() + ";");
+    }
+
+    /**
+     * Method to delete a host from the database
+     * @param hostId
+     * @return number of rows affected
+     */
+    public int deleteHost(int hostId){
+        return executeSQL("DELETE FROM host_data WHERE host_id = " + hostId + ";");
+    }
+
+    /**
+     * Method to delete the ping history for a host
+     * @param hostId
+     * @return number of rows affected
+     */
+    public int deleteHostPingHistory(int hostId){
+        return executeSQL("DELETE FROM ping_history WHERE host_id = " + hostId + ";");
+    }
+
+    /**
+     * Method to get all unique host statuses from the database
+     * @return ArrayList<String>
+     */
+    public ArrayList<String> getAllUniqueHostStatuses(){
+        ArrayList<String> statuses = new ArrayList<>();
+        String sql = "SELECT DISTINCT host_status FROM host_data;";
+        try (Statement stmt = connection.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                statuses.add(rs.getString("host_status"));
+            }
+        } catch (SQLException e) {
+            addLog("error", "Error getting all unique host statuses: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+        return statuses;
+    }
+
+    /**
+     * Method to get all unique host categories from the database
+     * @return ArrayList<String>
+     */
+    public ArrayList<String> getAllUniqueHostCategories(){
+        ArrayList<String> categories = new ArrayList<>();
+        String sql = "SELECT DISTINCT host_category FROM host_data;";
+        try (Statement stmt = connection.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                categories.add(rs.getString("host_category"));
+            }
+        } catch (SQLException e) {
+            addLog("error", "Error getting all unique host categories: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+        return categories;
+    }
+
+
+    /**
      * Method to create the database
      */
     public void createDatabase() {

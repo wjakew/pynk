@@ -7,18 +7,21 @@ package com.jakubwawak.pynk_web;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.security.access.method.P;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
 import com.jakubwawak.pynk_web.maintanance.Properties;
+import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.spring.annotation.EnableVaadin;
+import com.vaadin.flow.theme.Theme;
 
 /**
  * Web application for Pynk data visualization
  */
 @SpringBootApplication
 @EnableVaadin({"com.jakubwawak.pynk_web"})
-public class PynkWebApplication {
+@Theme(value = "pynktheme")
+public class PynkWebApplication extends SpringBootServletInitializer implements AppShellConfigurator{
 
 	public static String VERSION = "1.0.0";
 	public static String BUILD = "pynkweb17042025";
