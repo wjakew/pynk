@@ -100,38 +100,7 @@ public class HostManagementComponent extends VerticalLayout{
         logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
-        GridListDataView<Host> dataView = hostGrid.setItems(content);
-
-        dataView.addFilter(host -> {
-            if (searchTextField.getValue() == null || searchTextField.getValue().isEmpty()){
-                return true;
-            }
-            boolean result = false;
-            if (host.getHostName().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
-                result = true;
-            }
-            if (host.getHostIp().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
-                result = true;
-            }
-            if (host.getHostCategory().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
-                result = true;
-            }
-            if (host.getHostStatus().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
-                result = true;
-            }
-            return result;
-        });
-
-        searchTextField = new TextField();
-        searchTextField.setWidth("100%");
-        searchTextField.setPlaceholder("search");
-        searchTextField.setPrefixComponent(VaadinIcon.SEARCH.create());
-        searchTextField.getStyle().set("margin-left", "20px");
-        searchTextField.setValueChangeMode(ValueChangeMode.EAGER);
-        searchTextField.addValueChangeListener(e -> dataView.refreshAll());
-
         rightLayout.add(addHostButton,refreshButton);
-        leftLayout.add(logo,searchTextField);
 
         headerLayout.add(leftLayout,rightLayout);
 
@@ -148,15 +117,23 @@ public class HostManagementComponent extends VerticalLayout{
             TextField textField = new TextField();
             textField.setValue(Integer.toString(host.getHostJobTime()));
             textField.setWidth("100%");
-            textField.setReadOnly(true);
 
             textField.addValueChangeListener(event -> {
-                host.setHostJobTime(Integer.parseInt(textField.getValue()));
-                databaseEngine.updateHost(host);
-                Notification.show("Host job (" + host.getHostName() + ") time updated");
+                try{
+                    int value = Integer.parseInt(textField.getValue());
+                    if(value < 25000){
+                        Notification.show("Invalid job time (must be greater than 25000 ms)");
+                    }else{
+                        host.setHostJobTime(value);
+                        databaseEngine.updateHost(host);
+                        Notification.show("Host job (" + host.getHostName() + ") time updated");
+                    }
+                }catch(NumberFormatException e){
+                    Notification.show("Invalid job time");
+                }
             });
             return textField;
-        })).setHeader("Host Name");
+        })).setHeader("Job Time");
 
         hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
             ComboBox<String> comboBox = new ComboBox<>();
@@ -206,6 +183,38 @@ public class HostManagementComponent extends VerticalLayout{
 
         hostGrid.setSizeFull();
         hostGrid.setItems(content);   
+
+        GridListDataView<Host> dataView = hostGrid.setItems(content);
+
+        dataView.addFilter(host -> {
+            if (searchTextField.getValue() == null || searchTextField.getValue().isEmpty()){
+                return true;
+            }
+            boolean result = false;
+            if (host.getHostName().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostIp().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostCategory().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            if (host.getHostStatus().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+                result = true;
+            }
+            return result;
+        });
+
+        searchTextField = new TextField();
+        searchTextField.setWidth("100%");
+        searchTextField.setPlaceholder("search");
+        searchTextField.setPrefixComponent(VaadinIcon.SEARCH.create());
+        searchTextField.getStyle().set("margin-left", "20px");
+        searchTextField.setValueChangeMode(ValueChangeMode.EAGER);
+        searchTextField.addValueChangeListener(e -> dataView.refreshAll());
+
+        leftLayout.add(logo,searchTextField);
     }
 
     /**
