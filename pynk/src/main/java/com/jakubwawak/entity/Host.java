@@ -82,6 +82,14 @@ public class Host {
         this.hostName = hostName;
     }
 
+    public String getHostStatus() {
+        return hostStatus;
+    }
+
+    public void setHostStatus(String hostStatus) {
+        this.hostStatus = hostStatus;
+    }
+
     public String getHostIp() {
         return hostIp;
     }

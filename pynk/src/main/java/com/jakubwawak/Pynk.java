@@ -17,7 +17,7 @@ import com.jakubwawak.maintanance.Properties;
 public class Pynk {
 
     public static final String VERSION = "1.0.0";
-    public static final String BUILD = "pynk16042025REV01";
+    public static final String BUILD = "pynk17042025REV01";
 
     public static DatabaseEngine databaseEngine;
     public static Properties properties;
@@ -37,9 +37,10 @@ public class Pynk {
 
             ArrayList<Host> hosts = databaseEngine.getHosts();
             for (Host host : hosts) {
-                Runnable jobRunnable = new Runnable() {
-                    @Override
-                    public void run() {
+                if( host.getHostStatus().equals("active")) {
+                    Runnable jobRunnable = new Runnable() {
+                        @Override
+                        public void run() {
                         int jobNumber = 0;
                         while (true) {
                             Pynk.databaseEngine.addHostLog(host.getHostId(), "thread-job", "Starting job " + jobNumber + " for host " + host.getHostName(), "info", "#0000FF");
@@ -56,8 +57,12 @@ public class Pynk {
                         }
                     }
                 };
-                Thread jobThread = new Thread(jobRunnable);
-                jobThread.start();
+                    Thread jobThread = new Thread(jobRunnable);
+                    jobThread.start();
+                }
+                else{
+                    Pynk.databaseEngine.addHostLog(host.getHostId(), "thread-job", "Host " + host.getHostName() + " is not active, skipping", "info", "#0000FF");
+                }
             }
 
 
