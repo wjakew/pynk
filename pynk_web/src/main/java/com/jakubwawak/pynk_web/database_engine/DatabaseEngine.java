@@ -335,6 +335,22 @@ public class DatabaseEngine {
         }
         return hosts;
     }
+
+    /**
+     * Method to get a host by id
+     * @param hostId
+     * @return Host
+     */
+    public Host getHostById(int hostId){
+        String sql = "SELECT * FROM host_data WHERE host_id = " + hostId + ";";
+        try (Statement stmt = connection.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            return new Host(rs);
+        } catch (SQLException e) {
+            addLog("error", "Error getting host by id: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+        return null;
+    }
     /**
      * Method to close the database connection
      */

@@ -240,6 +240,14 @@ public class PingData {
     }
 
     /**
+     * Get packet status code
+     * @return String
+     */
+    public String getPacketStatusCode(){
+        return this.packetStatusCode;
+    }
+
+    /**
      * Verify packet hop times
      * @return boolean
      */
@@ -362,7 +370,7 @@ public class PingData {
             this.packetStatusColorHex = "#0000FF";
         }
         if ( this.packetReceived == this.packetTransmitted ){
-            if ( hasValidPacketHopTimes() ){
+            if ( verifyPacketHopTimes() ){
                 this.packetStatusCode = "Success";
                 this.packetStatusColorHex = "#00FF00";
             } else {

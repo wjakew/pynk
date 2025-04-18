@@ -18,6 +18,25 @@
 
     --pink-color:#FB9EC6;
 }
+vaadin-dialog-overlay::part(header) {
+    font-family: var(--header-font);
+}
+vaadin-grid-cell-content{
+    font-family: monospace;
+    --vaadin-grid-cell-content-focused-label-color: var(--pink-color);
+}
+vaadin-text-field{
+    font-family: monospace;
+    --vaadin-input-field-focused-label-color: var(--pink-color);
+}
+vaadin-combo-box{
+    font-family: monospace;
+    --vaadin-input-field-focused-label-color: var(--pink-color);
+}
+vaadin-integer-field{
+    font-family: monospace;
+    --vaadin-input-field-focused-label-color: var(--pink-color);
+}
 /*pages*/
 .page {
     background-color: white;

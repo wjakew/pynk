@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
 import com.jakubwawak.pynk_web.entity.Host;
+import com.jakubwawak.pynk_web.server.windows.AddHostWindow;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -89,6 +90,12 @@ public class HostManagementComponent extends VerticalLayout{
 
         addHostButton = new Button("Add Host",VaadinIcon.PLUS.create());
         addHostButton.addClassName("header-button");
+
+        addHostButton.addClickListener(event -> {
+            AddHostWindow addHostWindow = new AddHostWindow(null,this);
+            add(addHostWindow);
+            addHostWindow.open();
+        });
 
         addHostButton.getStyle().set("margin-right", "10px");
 
@@ -173,6 +180,7 @@ public class HostManagementComponent extends VerticalLayout{
         })).setHeader("Status");
 
         hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
+            
             Button button = new Button("",VaadinIcon.TRASH.create());
             button.addThemeVariants(ButtonVariant.LUMO_ERROR,ButtonVariant.LUMO_SMALL);
             button.addClickListener(event -> {
@@ -184,7 +192,16 @@ public class HostManagementComponent extends VerticalLayout{
                     Notification.show("Host (" + host.getHostName() + ") deletion failed");
                 }
             });
-            return button;
+
+            Button editButton = new Button("Edit",VaadinIcon.EDIT.create());
+            editButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,ButtonVariant.LUMO_SMALL);
+            editButton.addClickListener(event -> {
+                AddHostWindow addHostWindow = new AddHostWindow(host,this);
+                add(addHostWindow);
+                addHostWindow.open();
+            });
+
+            return new HorizontalLayout(button,editButton);
         })).setHeader("Actions");
 
         hostGrid.setSizeFull();

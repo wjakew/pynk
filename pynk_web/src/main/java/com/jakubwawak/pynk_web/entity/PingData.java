@@ -8,6 +8,7 @@ package com.jakubwawak.pynk_web.entity;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import com.jakubwawak.pynk_web.PynkWebApplication;
 
@@ -152,6 +153,38 @@ public class PingData {
     }
 
     /**
+     * Get time avg
+     * @return int
+     */
+    public double getTimeAvg(){
+        return this.packetRoundTripTimeAvg;
+    }
+
+    /**
+     * Get time max
+     * @return double
+     */
+    public double getTimeMax(){
+        return this.packetRoundTripTimeMax;
+    }
+
+    /**
+     * Get time min
+     * @return double
+     */
+    public double getTimeMin(){
+        return this.packetRoundTripTimeMin;
+    }
+
+    /**
+     * Get host name
+     * @return String
+     */
+    public String getHostName(){
+        return PynkWebApplication.databaseEngine.getHostById(this.hostId).getHostName();
+    }
+
+    /**
      * Set host ID
      * @param hostId
      */
@@ -172,6 +205,14 @@ public class PingData {
      */
     public void setTime(){
         this.pingTimestamp = new Timestamp(System.currentTimeMillis());
+    }
+
+    /**
+     * Get ping timestamp
+     * @return LocalDateTime
+     */
+    public LocalDateTime getPingTimestamp(){
+        return this.pingTimestamp.toLocalDateTime();
     }
 
     /**

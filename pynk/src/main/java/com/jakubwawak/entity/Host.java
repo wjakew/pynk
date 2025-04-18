@@ -113,4 +113,12 @@ public class Host {
     public void setHostDescription(String hostDescription) {
         this.hostDescription = hostDescription;
     }
+
+    /**
+     * Get the ping interval
+     * @return int
+     */
+    public int getPingInterval() {
+        return hostJobTime;
+    }
 }

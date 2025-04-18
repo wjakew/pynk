@@ -35,7 +35,7 @@ public class Job {
         PingEngine pingEngine = new PingEngine();
         PingData pingData = pingEngine.pingHost(host);
         databaseEngine.addPingData(pingData);
-        databaseEngine.addLog("job", "Job for host: " + host.getHostName() + " completed", "info", "#0000FF");
+        databaseEngine.addLog("job", "Job for host: " + host.getHostName() + " completed,status: "+pingData.getPacketStatusCode()+" waiting for "+host.getPingInterval()+" seconds", "info", "#0000FF");
         databaseEngine.closeConnection();
     }
     

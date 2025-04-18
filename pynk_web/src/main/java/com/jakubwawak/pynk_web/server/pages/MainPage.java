@@ -5,6 +5,7 @@
  */
 package com.jakubwawak.pynk_web.server.pages;
 
+import com.jakubwawak.pynk_web.server.components.DataViewerComponent;
 import com.jakubwawak.pynk_web.server.components.HeaderComponent;
 import com.jakubwawak.pynk_web.server.components.HostManagementComponent;
 import com.vaadin.flow.component.html.H1;
@@ -24,6 +25,7 @@ public class MainPage extends VerticalLayout {
     HeaderComponent header;
 
     public HostManagementComponent hostManagementComponent;
+    public DataViewerComponent dataViewerComponent;
 
     /**
      * Constructor
@@ -51,9 +53,11 @@ public class MainPage extends VerticalLayout {
      */
     void prepareContent(){
         hostManagementComponent = new HostManagementComponent();
-        add(hostManagementComponent);
+        dataViewerComponent = new DataViewerComponent();
+        add(hostManagementComponent,dataViewerComponent);
 
-        hostManagementComponent.setVisible(false);;
+        hostManagementComponent.setVisible(false);
+        dataViewerComponent.setVisible(true);
     }
     
 }

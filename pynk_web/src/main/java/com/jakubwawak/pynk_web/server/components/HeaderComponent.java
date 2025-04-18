@@ -54,6 +54,7 @@ public class HeaderComponent extends HorizontalLayout {
 
         manageHostsButton.addClickListener(event -> {
             parent.hostManagementComponent.setVisible(!parent.hostManagementComponent.isVisible());
+            parent.dataViewerComponent.setVisible(false);
             parent.hostManagementComponent.refreshContent();
         });
 
@@ -62,6 +63,12 @@ public class HeaderComponent extends HorizontalLayout {
         dataButton.getStyle().set("margin-right", "10px");
         StreamResource res = new StreamResource("pynk-logo.png", () -> {
             return MainPage.class.getClassLoader().getResourceAsStream("images/pynk_icon.png");
+        });
+
+        dataButton.addClickListener(event -> {
+            parent.dataViewerComponent.setVisible(!parent.dataViewerComponent.isVisible());
+            parent.hostManagementComponent.setVisible(false);
+            //parent.dataViewerComponent.refreshContent();
         });
 
         Image logoImage = new Image(res, "pynk-logo");

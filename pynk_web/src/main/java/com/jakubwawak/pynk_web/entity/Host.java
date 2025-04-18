@@ -39,6 +39,16 @@ public class Host {
         this.hostJobTime = hostJobTime; // in miliseconds
     }
 
+    public Host(){
+        this.hostId = 0;
+        this.hostName = "";
+        this.hostIp = "";
+        this.hostCategory = "";
+        this.hostDescription = "";
+        this.hostStatus = "";
+        this.hostJobTime = 0;
+    }
+
     /**
      * Constructor to create a host from a result set
      * @param resultSet
