@@ -12,6 +12,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
 import com.jakubwawak.pynk_web.maintanance.Properties;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.server.AppShellSettings;
 import com.vaadin.flow.spring.annotation.EnableVaadin;
 import com.vaadin.flow.theme.Theme;
 
@@ -54,6 +55,19 @@ public class PynkWebApplication extends SpringBootServletInitializer implements 
 			properties.createPropertiesFile();
 			System.out.println("Properties file created, please configure it and restart the application");
 		}
+	}
+
+		/**
+	 * Function for configuring the page
+	 * 
+	 * @param settings
+	 */
+	@Override
+	public void configurePage(AppShellSettings settings) {
+		settings.setViewport("width=device-width, initial-scale=1");
+		settings.addMetaTag("author", "Jakub Wawak");
+		settings.addFavIcon("icon", "logo.ico", "192x192");
+		settings.addLink("shortcut icon", "logo.ico");
 	}
 
 	/**

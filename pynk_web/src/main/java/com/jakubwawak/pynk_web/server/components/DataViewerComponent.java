@@ -14,15 +14,17 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-import org.checkerframework.checker.units.qual.kN;
-
 import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.entity.PingData;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.H6;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
@@ -41,6 +43,8 @@ public class DataViewerComponent extends VerticalLayout{
     DateTimePicker startDatePicker;
     DateTimePicker endDatePicker;
 
+    Button refreshButton, clearTimeRangeButton;
+
     /**
      * Constructor
      */
@@ -51,6 +55,7 @@ public class DataViewerComponent extends VerticalLayout{
         setJustifyContentMode(JustifyContentMode.CENTER);
 
         prepareContent();
+        prepareLayout();
     }
 
     /**
@@ -58,16 +63,58 @@ public class DataViewerComponent extends VerticalLayout{
      */
     private void prepareContent(){
         startDatePicker = new DateTimePicker();
-        startDatePicker.setLabel("Start Date");
+        startDatePicker.setLabel("");
         startDatePicker.setValue(LocalDateTime.now().minusHours(1));
 
+        startDatePicker.getStyle().set("margin-right", "10px");
+
         endDatePicker = new DateTimePicker();
-        endDatePicker.setLabel("End Date");
+        endDatePicker.setLabel("");
         endDatePicker.setValue(LocalDateTime.now());
+
+        endDatePicker.getStyle().set("margin-left", "10px");
+
+        refreshButton = new Button("",VaadinIcon.REFRESH.create());
+        refreshButton.getStyle().set("margin-left", "10px");
+        refreshButton.addClassName("header-button");
+
+        clearTimeRangeButton = new Button("",VaadinIcon.ERASER.create());
+        clearTimeRangeButton.getStyle().set("margin-right", "10px");
+        clearTimeRangeButton.addClassName("header-button");
+
+        clearTimeRangeButton.addClickListener(event -> {
+            startDatePicker.setValue(LocalDateTime.now().minusHours(1));
+            endDatePicker.setValue(LocalDateTime.now());
+            content.clear();
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue())));
+            pingDataGrid.getDataProvider().refreshAll();
+            Notification.show("Data refreshed - time range cleared");
+        });
+        
+        refreshButton.addClickListener(event -> {
+            content.clear();
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue())));
+            pingDataGrid.getDataProvider().refreshAll();
+            Notification.show("Data refreshed");
+        });
 
         content = databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue()));
         
         pingDataGrid = new Grid<>(PingData.class,false);
+
+        startDatePicker.addValueChangeListener(event -> {
+            content.clear();
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue())));
+            pingDataGrid.getDataProvider().refreshAll();
+            Notification.show("Data refreshed - start date changed");
+        });
+
+        endDatePicker.addValueChangeListener(event -> {
+            content.clear();
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue())));
+            pingDataGrid.getDataProvider().refreshAll();
+            Notification.show("Data refreshed - end date changed");
+        });
         
         pingDataGrid.addColumn(PingData::getPingTimestamp).setHeader("Timestamp");
         pingDataGrid.addColumn(PingData::getHostName).setHeader("Host Name");
@@ -105,8 +152,6 @@ public class DataViewerComponent extends VerticalLayout{
             H6 dailyAvg = new H6(String.valueOf(databaseDataEngine.getAverageAveragePingTimeFromLastDay(pingData.hostId)));
             return dailyAvg;
         })).setHeader("Last 24h avg (ms)");
-        
-        add(pingDataGrid);
 
         pingDataGrid.setItems(content);
         pingDataGrid.setSizeFull();
@@ -117,7 +162,7 @@ public class DataViewerComponent extends VerticalLayout{
      */
     void prepareLayout(){
         headerLayout = new HorizontalLayout();
-        headerLayout.setWidthFull();
+        headerLayout.setWidth("100%");
         headerLayout.setJustifyContentMode(JustifyContentMode.START);
         headerLayout.setAlignItems(Alignment.CENTER);
 
@@ -137,8 +182,18 @@ public class DataViewerComponent extends VerticalLayout{
         logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
-        leftLayout.add(logo);
-        rightLayout.add(startDatePicker,endDatePicker);
+        H5 timeRangeLabelFrom = new H5("from:");   
+        timeRangeLabelFrom.addClassName("logo");
+        timeRangeLabelFrom.getStyle().set("margin-right", "5px");
+        timeRangeLabelFrom.getStyle().set("font-size", "1.5rem");
+
+        H5 timeRangeLabelTo = new H5("to:");   
+        timeRangeLabelTo.addClassName("logo");
+        timeRangeLabelTo.getStyle().set("margin-right", "5px");
+        timeRangeLabelTo.getStyle().set("font-size", "1.5rem");
+
+        leftLayout.add(logo,logo);
+        rightLayout.add(clearTimeRangeButton,timeRangeLabelFrom,startDatePicker,timeRangeLabelTo,endDatePicker,refreshButton);
 
         headerLayout.add(leftLayout,rightLayout);
 
