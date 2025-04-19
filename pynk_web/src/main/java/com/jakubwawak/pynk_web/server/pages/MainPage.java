@@ -5,6 +5,7 @@
  */
 package com.jakubwawak.pynk_web.server.pages;
 
+import com.jakubwawak.pynk_web.server.components.DashboardComponent;
 import com.jakubwawak.pynk_web.server.components.DataViewerComponent;
 import com.jakubwawak.pynk_web.server.components.HeaderComponent;
 import com.jakubwawak.pynk_web.server.components.HostManagementComponent;
@@ -26,6 +27,7 @@ public class MainPage extends VerticalLayout {
 
     public HostManagementComponent hostManagementComponent;
     public DataViewerComponent dataViewerComponent;
+    public DashboardComponent dashboardComponent;
 
     /**
      * Constructor
@@ -43,7 +45,7 @@ public class MainPage extends VerticalLayout {
     /**
      * Prepare header
      */
-    void prepareHeader(){
+    void prepareHeader() {
         header = new HeaderComponent(this);
         add(header);
     }
@@ -51,13 +53,16 @@ public class MainPage extends VerticalLayout {
     /**
      * Prepare content
      */
-    void prepareContent(){
+    void prepareContent() {
         hostManagementComponent = new HostManagementComponent();
         dataViewerComponent = new DataViewerComponent();
-        add(hostManagementComponent,dataViewerComponent);
+        dashboardComponent = new DashboardComponent();
+
+        add(hostManagementComponent, dataViewerComponent, dashboardComponent);
 
         hostManagementComponent.setVisible(false);
-        dataViewerComponent.setVisible(true);
+        dataViewerComponent.setVisible(false);
+        dashboardComponent.setVisible(true);
     }
-    
+
 }

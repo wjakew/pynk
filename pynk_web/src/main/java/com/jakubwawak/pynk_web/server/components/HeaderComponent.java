@@ -20,9 +20,9 @@ import com.vaadin.flow.server.StreamResource;
  */
 public class HeaderComponent extends HorizontalLayout {
 
-    FlexLayout leftLayout,rightLayout;
+    FlexLayout leftLayout, rightLayout;
 
-    Button manageHostsButton, dataButton;
+    Button dashboardButton, manageHostsButton, dataButton;
 
     H4 logo;
 
@@ -30,6 +30,7 @@ public class HeaderComponent extends HorizontalLayout {
 
     /**
      * Constructor
+     * 
      * @param parent
      */
     public HeaderComponent(MainPage parent) {
@@ -47,9 +48,9 @@ public class HeaderComponent extends HorizontalLayout {
     /**
      * Prepare the header
      */
-    void prepareHeader(){
+    void prepareHeader() {
 
-        manageHostsButton = new Button("Manage Hosts",VaadinIcon.GLOBE.create());
+        manageHostsButton = new Button("Manage Hosts", VaadinIcon.GLOBE.create());
         manageHostsButton.addClassName("header-button");
 
         manageHostsButton.addClickListener(event -> {
@@ -58,7 +59,7 @@ public class HeaderComponent extends HorizontalLayout {
             parent.hostManagementComponent.refreshContent();
         });
 
-        dataButton = new Button("Data",VaadinIcon.DATABASE.create());
+        dataButton = new Button("Data", VaadinIcon.DATABASE.create());
         dataButton.addClassName("header-button");
         dataButton.getStyle().set("margin-right", "10px");
         StreamResource res = new StreamResource("pynk-logo.png", () -> {
@@ -68,7 +69,17 @@ public class HeaderComponent extends HorizontalLayout {
         dataButton.addClickListener(event -> {
             parent.dataViewerComponent.setVisible(!parent.dataViewerComponent.isVisible());
             parent.hostManagementComponent.setVisible(false);
-            //parent.dataViewerComponent.refreshContent();
+            // parent.dataViewerComponent.refreshContent();
+        });
+
+        dashboardButton = new Button("Dashboard", VaadinIcon.HOME.create());
+        dashboardButton.addClassName("header-button");
+        dashboardButton.getStyle().set("margin-right", "10px");
+
+        dashboardButton.addClickListener(event -> {
+            parent.dashboardComponent.setVisible(!parent.dashboardComponent.isVisible());
+            parent.hostManagementComponent.setVisible(false);
+            parent.dataViewerComponent.setVisible(false);
         });
 
         Image logoImage = new Image(res, "pynk-logo");
@@ -91,10 +102,10 @@ public class HeaderComponent extends HorizontalLayout {
         logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
-        leftLayout.add(logoImage,logo);
+        leftLayout.add(logoImage, logo);
 
-        rightLayout.add(dataButton,manageHostsButton);
+        rightLayout.add(dashboardButton, dataButton, manageHostsButton);
 
-        add(leftLayout,rightLayout);
+        add(leftLayout, rightLayout);
     }
 }
