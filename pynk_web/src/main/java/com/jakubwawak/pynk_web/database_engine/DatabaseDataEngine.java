@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.jakubwawak.pynk_web.entity.Host;
 import com.jakubwawak.pynk_web.entity.PingData;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Accumulators;
@@ -44,6 +45,36 @@ public class DatabaseDataEngine {
         try {
             databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
                     .find(Filters.and(
+                            Filters.gt("ping_timestamp", new Date(startDate.getTime())),
+                            Filters.lt("ping_timestamp", new Date(endDate.getTime()))))
+                    .sort(new Document("ping_timestamp", -1)) // DESC order
+                    .map(doc -> new PingData(doc))
+                    .into(pingData);
+
+            databaseEngine.addLog("DatabaseDataEngine", "Successfully got ping data between dates " + startDate
+                    + " and " + endDate + " with " + pingData.size() + " rows", "INFO", "#00FF00");
+            return pingData;
+        } catch (Exception e) {
+            databaseEngine.addLog("DatabaseDataEngine", "Error getting ping data between dates " + e.getMessage(),
+                    "ERROR", "#FF0000");
+            return null;
+        }
+    }
+
+    /**
+     * Get ping data between dates for a specific host
+     * 
+     * @param host
+     * @param startDate
+     * @param endDate
+     * @return ping data between dates for a specific host
+     */
+    public ArrayList<PingData> getPingDataBetweenDates(Host host, Timestamp startDate, Timestamp endDate) {
+        ArrayList<PingData> pingData = new ArrayList<>();
+        try {
+            databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                    .find(Filters.and(
+                            Filters.eq("host_id", host.getHostIdMongo()),
                             Filters.gt("ping_timestamp", new Date(startDate.getTime())),
                             Filters.lt("ping_timestamp", new Date(endDate.getTime()))))
                     .sort(new Document("ping_timestamp", -1)) // DESC order

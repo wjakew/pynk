@@ -30,6 +30,14 @@
 		<java.version>17</java.version>
 		<vaadin.version>24.7.2</vaadin.version>
 	</properties>
+	<reporting>
+	</reporting>
+	<repositories>
+		<repository>
+			<id>storedobject</id>
+			<url>https://repos.dussan.org/content/repositories/vaadin-addons/</url>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -56,6 +64,13 @@
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
 			<version>5.0.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.storedobject.chart/so-charts -->
+		<dependency>
+			<groupId>com.storedobject.chart</groupId>
+			<artifactId>so-charts</artifactId>
+			<version>4.0.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
