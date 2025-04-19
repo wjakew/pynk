@@ -8,12 +8,16 @@ package com.jakubwawak.pynk_web.entity;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
 /**
  * Host entity class
  */
 public class Host {
 
     public int hostId; // Corresponds to host_id
+    public ObjectId hostIdMongo; // Corresponds to host_id
     public String hostName; // Corresponds to host_name
     public String hostIp; // Corresponds to host_ip
     public String hostCategory; // Corresponds to host_category
@@ -23,13 +27,15 @@ public class Host {
 
     /**
      * Constructor to create a host
+     * 
      * @param hostId
      * @param hostName
      * @param hostIp
      * @param hostCategory
      * @param hostDescription
      */
-    public Host(int hostId, String hostName, String hostIp, String hostCategory, String hostDescription, String hostStatus, int hostJobTime) {
+    public Host(int hostId, String hostName, String hostIp, String hostCategory, String hostDescription,
+            String hostStatus, int hostJobTime) {
         this.hostId = hostId;
         this.hostName = hostName;
         this.hostIp = hostIp;
@@ -39,7 +45,10 @@ public class Host {
         this.hostJobTime = hostJobTime; // in miliseconds
     }
 
-    public Host(){
+    /**
+     * Constructor to create a host
+     */
+    public Host() {
         this.hostId = 0;
         this.hostName = "";
         this.hostIp = "";
@@ -50,7 +59,23 @@ public class Host {
     }
 
     /**
+     * Constructor to create a host from a document
+     * 
+     * @param document
+     */
+    public Host(Document document) {
+        this.hostIdMongo = document.getObjectId("_id");
+        this.hostName = document.getString("hostName");
+        this.hostIp = document.getString("hostIp");
+        this.hostCategory = document.getString("hostCategory");
+        this.hostDescription = document.getString("hostDescription");
+        this.hostStatus = document.getString("hostStatus");
+        this.hostJobTime = document.getInteger("hostJobTime");
+    }
+
+    /**
      * Constructor to create a host from a result set
+     * 
      * @param resultSet
      */
     public Host(ResultSet resultSet) {
@@ -68,7 +93,31 @@ public class Host {
     }
 
     /**
+     * Convert the host to a document
+     * 
+     * @return Document
+     */
+    public Document toDocument() {
+        return new Document("hostName", hostName)
+                .append("hostIp", hostIp)
+                .append("hostCategory", hostCategory)
+                .append("hostDescription", hostDescription)
+                .append("hostStatus", hostStatus)
+                .append("hostJobTime", hostJobTime);
+    }
+
+    /**
+     * Set the host job time
+     * 
+     * @param hostJobTime
+     */
+    public void setHostJobTime(int hostJobTime) {
+        this.hostJobTime = hostJobTime;
+    }
+
+    /**
      * Get the host job time
+     * 
      * @return int
      */
     public int getHostJobTime() {
@@ -78,6 +127,10 @@ public class Host {
     // Getters and Setters
     public int getHostId() {
         return hostId;
+    }
+
+    public ObjectId getHostIdMongo() {
+        return hostIdMongo;
     }
 
     public void setHostId(int hostId) {
@@ -90,6 +143,14 @@ public class Host {
 
     public void setHostName(String hostName) {
         this.hostName = hostName;
+    }
+
+    public String getHostStatus() {
+        return hostStatus;
+    }
+
+    public void setHostStatus(String hostStatus) {
+        this.hostStatus = hostStatus;
     }
 
     public String getHostIp() {
@@ -116,17 +177,12 @@ public class Host {
         this.hostDescription = hostDescription;
     }
 
-    public void setHostJobTime(int hostJobTime){
-        this.hostJobTime = hostJobTime;
+    /**
+     * Get the ping interval
+     * 
+     * @return int
+     */
+    public int getPingInterval() {
+        return hostJobTime;
     }
-
-    public String getHostStatus(){
-        return hostStatus;
-    }
-
-    public void setHostStatus(String hostStatus){
-        this.hostStatus = hostStatus;
-    }
-    
-    
 }

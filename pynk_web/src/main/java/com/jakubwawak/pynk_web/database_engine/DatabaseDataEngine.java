@@ -5,16 +5,19 @@
  */
 package com.jakubwawak.pynk_web.database_engine;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 
 import com.jakubwawak.pynk_web.entity.PingData;
-import java.sql.PreparedStatement;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
- * Database data engine
+ * Database data engine for MongoDB
  */
 public class DatabaseDataEngine {
 
@@ -39,18 +42,18 @@ public class DatabaseDataEngine {
     public ArrayList<PingData> getPingDataBetweenDates(Timestamp startDate, Timestamp endDate) {
         ArrayList<PingData> pingData = new ArrayList<>();
         try {
-            String sql = "SELECT * FROM ping_history WHERE ping_timestamp < ? AND ping_timestamp > ? ORDER BY ping_timestamp DESC";
-            PreparedStatement preparedStatement = databaseEngine.getConnection().prepareStatement(sql);
-            preparedStatement.setTimestamp(1, endDate);
-            preparedStatement.setTimestamp(2, startDate);
-            ResultSet resultSet = databaseEngine.executeSQLRead(preparedStatement);
-            while (resultSet.next()) {
-                pingData.add(new PingData(resultSet));
-            }
+            databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                    .find(Filters.and(
+                            Filters.gt("ping_timestamp", new Date(startDate.getTime())),
+                            Filters.lt("ping_timestamp", new Date(endDate.getTime()))))
+                    .sort(new Document("ping_timestamp", -1)) // DESC order
+                    .map(doc -> new PingData(doc))
+                    .into(pingData);
+
             databaseEngine.addLog("DatabaseDataEngine", "Successfully got ping data between dates " + startDate
                     + " and " + endDate + " with " + pingData.size() + " rows", "INFO", "#00FF00");
             return pingData;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             databaseEngine.addLog("DatabaseDataEngine", "Error getting ping data between dates " + e.getMessage(),
                     "ERROR", "#FF0000");
             return null;
@@ -63,29 +66,24 @@ public class DatabaseDataEngine {
      * @param hostId
      * @return average average ping time from last day
      */
-    public double getAverageAveragePingTimeFromLastDay(int hostId) {
+    public double getAverageAveragePingTimeFromLastDay(ObjectId hostId) {
         try {
-            String sql = "SELECT AVG(packet_round_trip_time_avg) FROM ping_history WHERE host_id = ? AND ping_timestamp > ? AND ping_timestamp < ? ORDER BY ping_timestamp DESC";
-            PreparedStatement preparedStatement = databaseEngine.getConnection().prepareStatement(sql);
-            preparedStatement.setInt(1, hostId);
-            preparedStatement.setTimestamp(2, new Timestamp(System.currentTimeMillis() - 24 * 60 * 60 * 1000));
-            preparedStatement.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
-            ResultSet resultSet = databaseEngine.executeSQLRead(preparedStatement);
-            if (resultSet.next()) {
-                return resultSet.getDouble("AVG(packet_round_trip_time_avg)");
+            Document result = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                    .aggregate(java.util.Arrays.asList(
+                            Aggregates.match(Filters.and(
+                                    Filters.eq("host_id", databaseEngine.getHostById(hostId).getHostIdMongo()),
+                                    Filters.gt("ping_timestamp",
+                                            new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                                    Filters.lt("ping_timestamp", new Date(System.currentTimeMillis())))),
+                            Aggregates.group(null, Accumulators.avg("avgPingTime", "$packet_round_trip_time_avg"))))
+                    .first();
+
+            if (result != null) {
+                return result.getDouble("avgPingTime");
             }
             return 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return 0;
         }
     }
-
-    /**
-     * Get ping data between dates
-     * 
-     * @param startDate
-     * @param endDate
-     * @return
-     */
-
 }

@@ -68,7 +68,7 @@ public class PynkWebApplication extends SpringBootServletInitializer implements 
 	 * Initialize database connection
 	 */
 	private static void initializeDatabase() {
-		databaseEngine = new DatabaseEngine(properties.getValue("databasePath"));
+		databaseEngine = new DatabaseEngine(properties.getValue("databaseUrl"));
 		connectToDatabase();
 		scheduleDatabaseReconnect();
 	}

@@ -9,6 +9,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import com.jakubwawak.pynk_web.PynkWebApplication;
 
@@ -18,7 +23,9 @@ import com.jakubwawak.pynk_web.PynkWebApplication;
 public class PingData {
 
     public int pingId;
+    public ObjectId pingIdMongo;
     public int hostId;
+    public ObjectId hostIdMongo;
     public Timestamp pingTimestamp;
     public String packetStatusCode;
     public String packetStatusColorHex;
@@ -46,7 +53,9 @@ public class PingData {
      */
     public PingData() {
         this.pingId = 0;
+        this.pingIdMongo = null;
         this.hostId = 0;
+        this.hostIdMongo = null;
         this.pingTimestamp = null;
         this.packetStatusCode = null;
         this.packetStatusColorHex = null;
@@ -97,7 +106,9 @@ public class PingData {
             String packetTracertData, double packetRoundTripTimeMin,
             double packetRoundTripTimeMax, double packetRoundTripTimeAvg, String packetRawPing) {
         this.pingId = pingId;
+        this.pingIdMongo = null;
         this.hostId = hostId;
+        this.hostIdMongo = null;
         this.pingTimestamp = pingTimestamp;
         this.packetStatusCode = packetStatusCode;
         this.packetStatusColorHex = packetStatusColorHex;
@@ -122,12 +133,72 @@ public class PingData {
     /**
      * Constructor
      * 
+     * @param document
+     */
+    public PingData(Document document) {
+        this.pingId = 0;
+        this.pingIdMongo = document.getObjectId("_id");
+        this.hostIdMongo = document.getObjectId("host_id");
+        this.pingTimestamp = Timestamp.valueOf(
+                document.getDate("ping_timestamp").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        this.packetStatusCode = document.getString("packet_status_code");
+        this.packetStatusColorHex = document.getString("packet_status_color_hex");
+        this.packetTransmitted = document.getInteger("packet_transmitted");
+        this.packetReceived = document.getInteger("packet_received");
+        this.packetHopTime1 = document.getDouble("packet_hop_time1");
+        this.packetHopTime2 = document.getDouble("packet_hop_time2");
+        this.packetHopTime3 = document.getDouble("packet_hop_time3");
+        this.packetHopTime4 = document.getDouble("packet_hop_time4");
+        this.packetHopTime5 = document.getDouble("packet_hop_time5");
+        this.packetHopTime6 = document.getDouble("packet_hop_time6");
+        this.packetHopTime7 = document.getDouble("packet_hop_time7");
+        this.packetHopTime8 = document.getDouble("packet_hop_time8");
+        this.packetDigData = document.getString("packet_dig_data");
+        this.packetTracertData = document.getString("packet_tracert_data");
+        this.packetRoundTripTimeMin = document.getDouble("packet_round_trip_time_min");
+        this.packetRoundTripTimeMax = document.getDouble("packet_round_trip_time_max");
+        this.packetRoundTripTimeAvg = document.getDouble("packet_round_trip_time_avg");
+        this.packetRawPing = document.getString("packet_raw_ping");
+    }
+
+    /**
+     * Convert to document
+     * 
+     * @return Document
+     */
+    public Document toDocument() {
+        return new Document("host_id", this.hostIdMongo)
+                .append("ping_timestamp", this.pingTimestamp)
+                .append("packet_status_code", this.packetStatusCode)
+                .append("packet_status_color_hex", this.packetStatusColorHex)
+                .append("packet_transmitted", this.packetTransmitted)
+                .append("packet_received", this.packetReceived)
+                .append("packet_hop_time1", this.packetHopTime1)
+                .append("packet_hop_time2", this.packetHopTime2)
+                .append("packet_hop_time3", this.packetHopTime3)
+                .append("packet_hop_time4", this.packetHopTime4)
+                .append("packet_hop_time5", this.packetHopTime5)
+                .append("packet_hop_time6", this.packetHopTime6)
+                .append("packet_hop_time7", this.packetHopTime7)
+                .append("packet_hop_time8", this.packetHopTime8)
+                .append("packet_dig_data", this.packetDigData)
+                .append("packet_tracert_data", this.packetTracertData)
+                .append("packet_round_trip_time_min", this.packetRoundTripTimeMin)
+                .append("packet_round_trip_time_max", this.packetRoundTripTimeMax)
+                .append("packet_round_trip_time_avg", this.packetRoundTripTimeAvg)
+                .append("packet_raw_ping", this.packetRawPing);
+    }
+
+    /**
+     * Constructor
+     * 
      * @param resultSet
      * @throws SQLException
      */
     public PingData(ResultSet resultSet) {
         try {
             this.pingId = resultSet.getInt("ping_id");
+            this.pingIdMongo = null;
             this.hostId = resultSet.getInt("host_id");
             this.pingTimestamp = resultSet.getTimestamp("ping_timestamp");
             this.packetStatusCode = resultSet.getString("packet_status_code");
@@ -155,30 +226,30 @@ public class PingData {
     }
 
     /**
-     * Get time avg
+     * Set host ID
      * 
-     * @return int
+     * @param hostId
      */
-    public double getTimeAvg() {
-        return this.packetRoundTripTimeAvg;
+    public void setHostId(int hostId) {
+        this.hostId = hostId;
+    }
+
+    public void setHostIdMongo(ObjectId hostIdMongo) {
+        this.hostIdMongo = hostIdMongo;
+    }
+
+    public void setPingIdMongo(ObjectId pingIdMongo) {
+        this.pingIdMongo = pingIdMongo;
     }
 
     /**
-     * Get time max
+     * Get ping timestamp
      * 
-     * @return double
+     * @return String
      */
-    public double getTimeMax() {
-        return this.packetRoundTripTimeMax;
-    }
-
-    /**
-     * Get time min
-     * 
-     * @return double
-     */
-    public double getTimeMin() {
-        return this.packetRoundTripTimeMin;
+    public String getPingTimestamp() {
+        LocalDateTime localDateTime = this.pingTimestamp.toLocalDateTime();
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     /**
@@ -187,22 +258,11 @@ public class PingData {
      * @return String
      */
     public String getHostName() {
-        Host host = PynkWebApplication.databaseEngine.getHostById(this.hostId);
-        if (host == null) {
-            PynkWebApplication.databaseEngine.addLog("error", "Host not found for ID: " + this.hostId, "error",
-                    "#FF0000");
-            return "Unknown Host (" + this.hostId + ")";
-        }
-        return host.getHostName();
+        return PynkWebApplication.databaseEngine.getHostById(this.hostIdMongo).getHostName();
     }
 
-    /**
-     * Set host ID
-     * 
-     * @param hostId
-     */
-    public void setHostId(int hostId) {
-        this.hostId = hostId;
+    public double getTimeAvg() {
+        return this.packetRoundTripTimeAvg;
     }
 
     /**
@@ -219,15 +279,6 @@ public class PingData {
      */
     public void setTime() {
         this.pingTimestamp = new Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Get ping timestamp
-     * 
-     * @return LocalDateTime
-     */
-    public LocalDateTime getPingTimestamp() {
-        return this.pingTimestamp.toLocalDateTime();
     }
 
     /**
@@ -298,6 +349,15 @@ public class PingData {
             this.error = true;
             PynkWebApplication.databaseEngine.addLog("error", "Error: " + e.getMessage(), "error", "#FF0000");
         }
+    }
+
+    /**
+     * Get packet status code
+     * 
+     * @return String
+     */
+    public String getPacketStatusCode() {
+        return this.packetStatusCode;
     }
 
     /**
@@ -428,7 +488,7 @@ public class PingData {
             this.packetStatusColorHex = "#0000FF";
         }
         if (this.packetReceived == this.packetTransmitted) {
-            if (hasValidPacketHopTimes()) {
+            if (verifyPacketHopTimes()) {
                 this.packetStatusCode = "Success";
                 this.packetStatusColorHex = "#00FF00";
             } else {

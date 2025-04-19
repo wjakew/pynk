@@ -30,23 +30,23 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 /**
  * Host Management Component
  */
-public class HostManagementComponent extends VerticalLayout{
-    
+public class HostManagementComponent extends VerticalLayout {
+
     ArrayList<Host> content;
     Grid<Host> hostGrid;
 
     DatabaseEngine databaseEngine;
 
-    Button addHostButton,refreshButton;
+    Button addHostButton, refreshButton;
 
-    FlexLayout leftLayout,rightLayout;
+    FlexLayout leftLayout, rightLayout;
     TextField searchTextField;
     HorizontalLayout headerLayout;
-    
+
     /**
      * Constructor
      */
-    public HostManagementComponent(){
+    public HostManagementComponent() {
         addClassName("host-management-component");
         databaseEngine = PynkWebApplication.databaseEngine;
 
@@ -56,13 +56,13 @@ public class HostManagementComponent extends VerticalLayout{
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
-        
+
     }
 
     /**
      * Refresh content
      */
-    public void refreshContent(){
+    public void refreshContent() {
         content.clear();
         content.addAll(databaseEngine.getHosts());
         hostGrid.getDataProvider().refreshAll();
@@ -71,7 +71,7 @@ public class HostManagementComponent extends VerticalLayout{
     /**
      * Prepare content
      */
-    void prepareContent(){
+    void prepareContent() {
 
         headerLayout = new HorizontalLayout();
         headerLayout.setWidthFull();
@@ -88,18 +88,18 @@ public class HostManagementComponent extends VerticalLayout{
         rightLayout.setJustifyContentMode(JustifyContentMode.END);
         rightLayout.setAlignItems(Alignment.CENTER);
 
-        addHostButton = new Button("Add Host",VaadinIcon.PLUS.create());
+        addHostButton = new Button("Add Host", VaadinIcon.PLUS.create());
         addHostButton.addClassName("header-button");
 
         addHostButton.addClickListener(event -> {
-            AddHostWindow addHostWindow = new AddHostWindow(null,this);
+            AddHostWindow addHostWindow = new AddHostWindow(null, this);
             add(addHostWindow);
             addHostWindow.open();
         });
 
         addHostButton.getStyle().set("margin-right", "10px");
 
-        refreshButton = new Button("",VaadinIcon.REFRESH.create());
+        refreshButton = new Button("", VaadinIcon.REFRESH.create());
         refreshButton.addClassName("header-button");
         refreshButton.addClickListener(event -> {
             refreshContent();
@@ -110,42 +110,42 @@ public class HostManagementComponent extends VerticalLayout{
         logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
-        rightLayout.add(addHostButton,refreshButton);
+        rightLayout.add(addHostButton, refreshButton);
 
-        headerLayout.add(leftLayout,rightLayout);
+        headerLayout.add(leftLayout, rightLayout);
 
         content = new ArrayList<>();
-        
-        content.addAll(databaseEngine.getHosts());
-        
-        hostGrid = new Grid<>(Host.class,false);
 
-        hostGrid.addColumn(Host::getHostName).setHeader("Host Name");
+        content.addAll(databaseEngine.getHosts());
+
+        hostGrid = new Grid<>(Host.class, false);
+
+        hostGrid.addColumn(Host::getHostName).setHeader("Host Name").setResizable(true);
         hostGrid.addColumn(Host::getHostIp).setHeader("Host IP");
 
-        hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
+        hostGrid.addColumn(new ComponentRenderer<Component, Host>(host -> {
             TextField textField = new TextField();
             textField.setValue(Integer.toString(host.getHostJobTime()));
             textField.setWidth("100%");
 
             textField.addValueChangeListener(event -> {
-                try{
+                try {
                     int value = Integer.parseInt(textField.getValue());
-                    if(value < 25000){
+                    if (value < 25000) {
                         Notification.show("Invalid job time (must be greater than 25000 ms)");
-                    }else{
+                    } else {
                         host.setHostJobTime(value);
                         databaseEngine.updateHost(host);
                         Notification.show("Host job (" + host.getHostName() + ") time updated");
                     }
-                }catch(NumberFormatException e){
+                } catch (NumberFormatException e) {
                     Notification.show("Invalid job time");
                 }
             });
             return textField;
         })).setHeader("Job Time (ms)");
 
-        hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
+        hostGrid.addColumn(new ComponentRenderer<Component, Host>(host -> {
             ComboBox<String> comboBox = new ComboBox<>();
             comboBox.setItems(databaseEngine.getAllUniqueHostCategories());
             comboBox.setValue(host.getHostCategory());
@@ -160,7 +160,7 @@ public class HostManagementComponent extends VerticalLayout{
             return comboBox;
         })).setHeader("Category");
 
-        hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
+        hostGrid.addColumn(new ComponentRenderer<Component, Host>(host -> {
             ComboBox<String> comboBox = new ComboBox<>();
             ArrayList<String> statuses = new ArrayList<>();
             statuses.add("active");
@@ -179,51 +179,51 @@ public class HostManagementComponent extends VerticalLayout{
             return comboBox;
         })).setHeader("Status");
 
-        hostGrid.addColumn(new ComponentRenderer<Component,Host>(host ->{
-            
-            Button button = new Button("",VaadinIcon.TRASH.create());
-            button.addThemeVariants(ButtonVariant.LUMO_ERROR,ButtonVariant.LUMO_SMALL);
+        hostGrid.addColumn(new ComponentRenderer<Component, Host>(host -> {
+
+            Button button = new Button("", VaadinIcon.TRASH.create());
+            button.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             button.addClickListener(event -> {
-                int ans = databaseEngine.deleteHost(host.getHostId());
-                if(ans > 0){
+                int ans = databaseEngine.deleteHost(host.getHostIdMongo());
+                if (ans > 0) {
                     refreshContent();
                     Notification.show("Host (" + host.getHostName() + ") deleted");
-                }else{
+                } else {
                     Notification.show("Host (" + host.getHostName() + ") deletion failed");
                 }
             });
 
-            Button editButton = new Button("Edit",VaadinIcon.EDIT.create());
-            editButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,ButtonVariant.LUMO_SMALL);
+            Button editButton = new Button("Edit", VaadinIcon.EDIT.create());
+            editButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SMALL);
             editButton.addClickListener(event -> {
-                AddHostWindow addHostWindow = new AddHostWindow(host,this);
+                AddHostWindow addHostWindow = new AddHostWindow(host, this);
                 add(addHostWindow);
                 addHostWindow.open();
             });
 
-            return new HorizontalLayout(button,editButton);
+            return new HorizontalLayout(button, editButton);
         })).setHeader("Actions");
 
         hostGrid.setSizeFull();
-        hostGrid.setItems(content);   
+        hostGrid.setItems(content);
 
         GridListDataView<Host> dataView = hostGrid.setItems(content);
 
         dataView.addFilter(host -> {
-            if (searchTextField.getValue() == null || searchTextField.getValue().isEmpty()){
+            if (searchTextField.getValue() == null || searchTextField.getValue().isEmpty()) {
                 return true;
             }
             boolean result = false;
-            if (host.getHostName().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+            if (host.getHostName().toLowerCase().contains(searchTextField.getValue().toLowerCase())) {
                 result = true;
             }
-            if (host.getHostIp().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+            if (host.getHostIp().toLowerCase().contains(searchTextField.getValue().toLowerCase())) {
                 result = true;
             }
-            if (host.getHostCategory().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+            if (host.getHostCategory().toLowerCase().contains(searchTextField.getValue().toLowerCase())) {
                 result = true;
             }
-            if (host.getHostStatus().toLowerCase().contains(searchTextField.getValue().toLowerCase())){
+            if (host.getHostStatus().toLowerCase().contains(searchTextField.getValue().toLowerCase())) {
                 result = true;
             }
             return result;
@@ -237,13 +237,13 @@ public class HostManagementComponent extends VerticalLayout{
         searchTextField.setValueChangeMode(ValueChangeMode.EAGER);
         searchTextField.addValueChangeListener(e -> dataView.refreshAll());
 
-        leftLayout.add(logo,searchTextField);
+        leftLayout.add(logo, searchTextField);
     }
 
     /**
      * Prepare layout
      */
-    void prepareLayout(){
+    void prepareLayout() {
         add(headerLayout);
         add(hostGrid);
     }
