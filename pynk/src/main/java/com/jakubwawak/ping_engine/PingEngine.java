@@ -19,22 +19,24 @@ public class PingEngine {
 
     /**
      * Ping a host
+     * 
      * @param host
      * @return PingData
      */
-    public PingData pingHost(Host host){
-        PingData pingData = pingHost(host.getHostIp(), 8);
+    public PingData pingHost(Host host) {
+        PingData pingData = pingHostInternal(host.getHostIp(), 8);
         pingData.setHostId(host.getHostId());
         return pingData;
     }
 
     /**
-     * Ping a host
+     * Internal method to ping a host - should not be called directly
+     * 
      * @param host
      * @param count
      * @return String
      */
-    public PingData pingHost(String host, int count) {
+    private PingData pingHostInternal(String host, int count) {
         PingData pingData = new PingData();
         String rawPing = "";
         Pynk.databaseEngine.addLog("job", "Pinging host: " + host + " with " + count + " packets", "info", "#0000FF");
@@ -50,20 +52,18 @@ public class PingEngine {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     rawPing += line + "\n";
-                    if ( line.contains("icmp_seq") ){
-                        try{
+                    if (line.contains("icmp_seq")) {
+                        try {
                             String raw_index = line.split(" ")[4];
                             int index = Integer.parseInt(raw_index.substring(raw_index.indexOf("=") + 1));
                             pingData.setPacketHopTime(line.split(" ")[6].split("=")[1], index);
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             Pynk.databaseEngine.addLog("error", "Error: " + e.getMessage(), "error", "#FF0000");
                         }
-                    }
-                    else if ( line.contains("packets transmitted") ){
+                    } else if (line.contains("packets transmitted")) {
                         pingData.setPacketTransmitted(line.split(" ")[0]);
                         pingData.setPacketReceived(line.split(" ")[3]);
-                    }
-                    else if ( line.contains("round-trip") || line.contains("rtt") ){
+                    } else if (line.contains("round-trip") || line.contains("rtt")) {
                         String data = line.split("=")[1].stripLeading().stripTrailing();
                         pingData.setPacketRoundTripTimeMin(data.split("/")[0]);
                         pingData.setPacketRoundTripTimeMax(data.split("/")[2]);
@@ -72,14 +72,15 @@ public class PingEngine {
 
                 }
             }
-            if ( pingData.verifyPacketHopTimes() ){
-                Pynk.databaseEngine.addLog("ping", "Ping successfull to "+host+" with "+count+" packets", "success", "#00FF00");
-            }
-            else{
-                Pynk.databaseEngine.addLog("ping", "Ping failed to "+host+" with "+count+" packets", "error", "#FF0000");
-                Pynk.databaseEngine.addLog("ping-check", "Dig to "+host, "info", "#0000FF");
+            if (pingData.verifyPacketHopTimes()) {
+                Pynk.databaseEngine.addLog("ping", "Ping successfull to " + host + " with " + count + " packets",
+                        "success", "#00FF00");
+            } else {
+                Pynk.databaseEngine.addLog("ping", "Ping failed to " + host + " with " + count + " packets", "error",
+                        "#FF0000");
+                Pynk.databaseEngine.addLog("ping-check", "Dig to " + host, "info", "#0000FF");
                 pingData.setPacketDigData(digHost(host));
-                Pynk.databaseEngine.addLog("ping-check", "Traceroute to "+host, "info", "#0000FF");
+                Pynk.databaseEngine.addLog("ping-check", "Traceroute to " + host, "info", "#0000FF");
                 pingData.setPacketTracertData(traceHost(host));
             }
         } catch (Exception e) {
@@ -92,6 +93,7 @@ public class PingEngine {
 
     /**
      * Trace a host
+     * 
      * @param host
      * @return String
      */
@@ -120,6 +122,7 @@ public class PingEngine {
 
     /**
      * Dig a host
+     * 
      * @param hostname
      * @return String
      */
@@ -146,5 +149,5 @@ public class PingEngine {
 
         return output.toString();
     }
-    
+
 }

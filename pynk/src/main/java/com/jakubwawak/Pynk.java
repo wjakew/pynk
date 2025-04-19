@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jakubwawak.database_engine.DatabaseEngine;
+import com.jakubwawak.database_engine.DocumentDatabaseEngine;
 import com.jakubwawak.entity.Host;
+import com.jakubwawak.maintanance.ConsoleColors;
 import com.jakubwawak.maintanance.Properties;
 
 /**
@@ -18,9 +20,13 @@ import com.jakubwawak.maintanance.Properties;
 public class Pynk {
 
     public static final String VERSION = "1.0.0";
-    public static final String BUILD = "pynk17042025REV01";
+    public static final String BUILD = "pynk19042025REV03";
+    public static final boolean debug = false;
 
     public static DatabaseEngine databaseEngine;
+
+    public static DocumentDatabaseEngine documentDatabaseEngine;
+
     public static Properties properties;
     public static ConcurrentHashMap<Integer, Host> activeHosts = new ConcurrentHashMap<>();
 
@@ -47,7 +53,8 @@ public class Pynk {
                             activeHosts.put(host.getHostId(), host);
                         }
                     }
-                    databaseEngine.addLog("host-refresh", "Host data refreshed from database (size: " + activeHosts.size() + ")", "info", "#0000FF");
+                    databaseEngine.addLog("host-refresh",
+                            "Host data refreshed from database (size: " + activeHosts.size() + ")", "info", "#0000FF");
                     Thread.sleep(refreshInterval);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -88,8 +95,8 @@ public class Pynk {
                             Thread jobThread = new Thread(jobRunnable);
                             jobThread.start();
                             jobThreads.put(host.getHostId(), jobThread);
-                            databaseEngine.addHostLog(host.getHostId(), "thread-manager", 
-                                "Created new job thread for host " + host.getHostName(), "info", "#0000FF");
+                            databaseEngine.addHostLog(host.getHostId(), "thread-manager",
+                                    "Created new job thread for host " + host.getHostName(), "info", "#0000FF");
                         }
                     }
 
@@ -99,8 +106,8 @@ public class Pynk {
                         if (!activeHosts.containsKey(hostId)) {
                             Thread thread = entry.getValue();
                             thread.interrupt();
-                            databaseEngine.addLog("thread-manager", 
-                                "Removed job thread for inactive host (ID: " + hostId + ")", "info", "#0000FF");
+                            databaseEngine.addLog("thread-manager",
+                                    "Removed job thread for inactive host (ID: " + hostId + ")", "info", "#0000FF");
                             return true;
                         }
                         return false;
@@ -124,20 +131,23 @@ public class Pynk {
                     while (!Thread.currentThread().isInterrupted()) {
                         // Get the latest host data from the shared map
                         Host currentHost = activeHosts.get(host.getHostId());
-                        
+
                         // Skip if host is no longer active or has been removed
                         if (currentHost == null || !currentHost.getHostStatus().equals("active")) {
-                            databaseEngine.addLog("thread-job", 
-                                "Host " + host.getHostName() + " is no longer active, stopping job thread", "info", "#0000FF");
+                            databaseEngine.addLog("thread-job",
+                                    "Host " + host.getHostName() + " is no longer active, stopping job thread", "info",
+                                    "#0000FF");
                             break;
                         }
 
-                        databaseEngine.addHostLog(currentHost.getHostId(), "thread-job", 
-                            "Starting job " + jobNumber + " for host " + currentHost.getHostName(), "info", "#0000FF");
+                        databaseEngine.addHostLog(currentHost.getHostId(), "thread-job",
+                                "Starting job " + jobNumber + " for host " + currentHost.getHostName(), "info",
+                                "#0000FF");
                         Job job = new Job(currentHost);
                         job.run();
-                        databaseEngine.addHostLog(currentHost.getHostId(), "thread-job", 
-                            "Job " + jobNumber + " for host " + currentHost.getHostName() + " completed", "info", "#0000FF");
+                        databaseEngine.addHostLog(currentHost.getHostId(), "thread-job",
+                                "Job " + jobNumber + " for host " + currentHost.getHostName() + " completed", "info",
+                                "#0000FF");
                         jobNumber++;
                         try {
                             Thread.sleep(currentHost.getHostJobTime());
@@ -160,7 +170,142 @@ public class Pynk {
     }
 
     /**
+     * Thread class for managing job threads for active hosts in MongoDB
+     */
+    private static class MongoHostManagerThread implements Runnable {
+        private final ConcurrentHashMap<org.bson.types.ObjectId, Thread> jobThreads = new ConcurrentHashMap<>();
+        private volatile boolean running = true;
+        private final int refreshInterval = 5000; // 5 seconds
+
+        @Override
+        public void run() {
+            while (running && !Thread.currentThread().isInterrupted()) {
+                try {
+                    // Get updated host list from MongoDB
+                    ArrayList<Host> currentHosts = documentDatabaseEngine.getHosts();
+
+                    documentDatabaseEngine.addLog("thread-manager",
+                            "Processing " + currentHosts.size() + " hosts", "info", "#0000FF");
+
+                    // Update job threads based on host status
+                    for (Host host : currentHosts) {
+                        documentDatabaseEngine.addLog("thread-manager",
+                                "Checking host: " + host.getHostName() + " (ID: " + host.getHostIdMongo() + ") Status: "
+                                        + host.getHostStatus(),
+                                "info", "#0000FF");
+
+                        if (host.getHostStatus().equals("active")) {
+                            if (!jobThreads.containsKey(host.getHostIdMongo())) {
+                                // Create new job thread for newly active host
+                                Runnable jobRunnable = createMongoJobRunnable(host);
+                                Thread jobThread = new Thread(jobRunnable);
+                                jobThread.start();
+                                jobThreads.put(host.getHostIdMongo(), jobThread);
+                                documentDatabaseEngine.addLog("thread-manager",
+                                        "Created new job thread for host " + host.getHostName(), "info", "#0000FF");
+                            }
+                        } else {
+                            // Stop and remove thread for inactive host
+                            Thread existingThread = jobThreads.remove(host.getHostIdMongo());
+                            if (existingThread != null) {
+                                existingThread.interrupt();
+                                documentDatabaseEngine.addLog("thread-manager",
+                                        "Stopped job thread for inactive host " + host.getHostName() + " (ID: "
+                                                + host.getHostIdMongo() + ")",
+                                        "info", "#0000FF");
+                            }
+                        }
+                    }
+
+                    // Remove threads for deleted hosts
+                    jobThreads.entrySet().removeIf(entry -> {
+                        org.bson.types.ObjectId hostId = entry.getKey();
+                        boolean hostExists = currentHosts.stream()
+                                .anyMatch(h -> h.hostIdMongo.equals(hostId));
+                        if (!hostExists) {
+                            entry.getValue().interrupt();
+                            documentDatabaseEngine.addLog("thread-manager",
+                                    "Removed job thread for deleted host (ID: " + hostId + ")", "info", "#0000FF");
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    Thread.sleep(refreshInterval);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    documentDatabaseEngine.addLog("error", "Error in MongoDB host manager: " + e.getMessage(), "error",
+                            "#FF0000");
+                    try {
+                        Thread.sleep(refreshInterval);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Create a job runnable for MongoDB
+         * 
+         * @param host
+         * @return Runnable
+         */
+        private Runnable createMongoJobRunnable(Host host) {
+            return new Runnable() {
+                @Override
+                public void run() {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            // Get the latest host data from MongoDB
+                            Host currentHost = documentDatabaseEngine.getHost(host.hostIdMongo);
+
+                            // Skip if host is no longer active
+                            if (currentHost == null || !currentHost.getHostStatus().equals("active")) {
+                                documentDatabaseEngine.addLog("thread-job",
+                                        "Host " + host.getHostName() + " is no longer active, stopping job thread",
+                                        "info", "#0000FF");
+                                break;
+                            }
+
+                            DocumentJob documentJob = new DocumentJob(currentHost);
+                            documentJob.run();
+
+                            Thread.sleep(currentHost.getHostJobTime());
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        } catch (Exception e) {
+                            documentDatabaseEngine.addLog("error",
+                                    "Error in job thread for host " + host.getHostName() + ": " + e.getMessage(),
+                                    "error", "#FF0000");
+                            try {
+                                Thread.sleep(host.getHostJobTime());
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                break;
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        public void stop() {
+            running = false;
+            // Interrupt all job threads
+            for (Thread thread : jobThreads.values()) {
+                thread.interrupt();
+            }
+        }
+    }
+
+    /**
      * Main application method
+     * 
      * @param args
      */
     public static void main(String[] args) {
@@ -169,27 +314,64 @@ public class Pynk {
         if (properties.fileExists) {
             // Load properties
             properties.parsePropertiesFile();
-            initDatabase(properties.getValue("databasePath")); // Initialize database
+            if (properties.getValue("databaseType").equals("sqlite")) {
+                initDatabase(properties.getValue("databasePath")); // Initialize database
 
-            // Start the host refresh thread
-            HostRefreshThread hostRefreshThread = new HostRefreshThread(30); // Refresh every 30 seconds
-            Thread refreshThread = new Thread(hostRefreshThread);
-            refreshThread.setDaemon(true);
-            refreshThread.start();
+                // Start the host refresh thread
+                HostRefreshThread hostRefreshThread = new HostRefreshThread(30); // Refresh every 30 seconds
+                Thread refreshThread = new Thread(hostRefreshThread);
+                refreshThread.setDaemon(true);
+                refreshThread.start();
 
-            // Start the job manager thread
-            JobManagerThread jobManagerThread = new JobManagerThread();
-            Thread managerThread = new Thread(jobManagerThread);
-            managerThread.setDaemon(true);
-            managerThread.start();
+                // Start the job manager thread
+                JobManagerThread jobManagerThread = new JobManagerThread();
+                Thread managerThread = new Thread(jobManagerThread);
+                managerThread.setDaemon(true);
+                managerThread.start();
 
-            // Keep the main thread alive
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
+                // Keep the main thread alive
+                while (true) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
                 }
+            } else if (properties.getValue("databaseType").equals("mongodb")) {
+                documentDatabaseEngine = new DocumentDatabaseEngine();
+                documentDatabaseEngine.setDatabase_url(properties.getValue("databaseUrl"));
+                documentDatabaseEngine.connect();
+
+                if (!documentDatabaseEngine.connected) {
+                    System.out.println("Failed to connect to MongoDB, please check the properties file");
+                    System.exit(0);
+                }
+
+                if (debug) {
+                    PynkTest pynkTest = new PynkTest();
+                    pynkTest.run();
+                } else {
+                    documentDatabaseEngine.checkAndInitializeHostsCollection();
+
+                    // Start the MongoDB host manager thread
+                    MongoHostManagerThread mongoHostManagerThread = new MongoHostManagerThread();
+                    Thread mongoManagerThread = new Thread(mongoHostManagerThread);
+                    mongoManagerThread.setDaemon(true);
+                    mongoManagerThread.start();
+
+                    // Keep the main thread alive
+                    while (true) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                }
+
+            } else {
+                System.out.println("Invalid database type, please check the properties file");
+                System.exit(0);
             }
         } else {
             // Create properties file
@@ -198,6 +380,7 @@ public class Pynk {
             System.out.println("Properties file created, please configure it and run the application again");
             System.exit(0);
         }
+
     }
 
     /**
@@ -213,7 +396,8 @@ public class Pynk {
      * Print help message
      */
     static void showHeader() {
-        System.out.println("Pynk - Service for generating network statistics");
+        System.out.println(ConsoleColors.PURPLE_BOLD_BRIGHT + "Pynk - Service for generating network statistics"
+                + ConsoleColors.RESET);
         System.out.println("Version: " + VERSION);
         System.out.println("Build: " + BUILD);
     }

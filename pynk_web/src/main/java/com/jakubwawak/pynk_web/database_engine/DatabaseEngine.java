@@ -13,10 +13,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.jakubwawak.pynk_web.entity.Host;
 import com.jakubwawak.pynk_web.entity.PingData;
 import com.jakubwawak.pynk_web.maintanance.ConsoleColors;
+import org.sqlite.SQLiteConfig;
 
 /**
  * Database engine for the application
@@ -26,6 +28,10 @@ public class DatabaseEngine {
     public boolean connected = false;
     private Connection connection;
     private String databasePath;
+    private final ReentrantLock connectionLock = new ReentrantLock();
+    private static final int MAX_RETRIES = 5;
+    private static final int INITIAL_WAIT_MS = 100;
+    private static final int BUSY_TIMEOUT_MS = 30000;
 
     /**
      * Constructor to initialize the database path and connect
@@ -38,15 +44,35 @@ public class DatabaseEngine {
     }
 
     /**
-     * Method to connect to the SQLite database
+     * Method to connect to the SQLite database with optimized settings
      */
     public void connect() {
         try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
+            connectionLock.lock();
+            try {
+                if (connection != null && !connection.isClosed()) {
+                    connection.close();
+                }
+
+                SQLiteConfig config = new SQLiteConfig();
+                config.setJournalMode(SQLiteConfig.JournalMode.WAL);
+                config.setBusyTimeout(BUSY_TIMEOUT_MS);
+                config.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL);
+                config.setLockingMode(SQLiteConfig.LockingMode.NORMAL);
+
+                connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath, config.toProperties());
+
+                // Additional connection settings
+                try (Statement stmt = connection.createStatement()) {
+                    // Set page size and cache size for better performance
+                    stmt.execute("PRAGMA page_size = 4096");
+                    stmt.execute("PRAGMA cache_size = 2000");
+                    stmt.execute("PRAGMA temp_store = MEMORY");
+                }
+                connected = true;
+            } finally {
+                connectionLock.unlock();
             }
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-            connected = true;
         } catch (SQLException e) {
             connected = false;
             e.printStackTrace();
@@ -72,19 +98,149 @@ public class DatabaseEngine {
     }
 
     /**
-     * Method to execute a SQL query for table creation
+     * Execute SQL with retry logic and proper transaction handling - for write
+     * operations
      * 
-     * @param sql
+     * @param sql SQL query to execute
      * @return number of rows affected
      */
-    public int executeSQL(String sql) {
-        try (Statement stmt = connection.createStatement()) {
-            stmt.execute(sql);
-            return stmt.getUpdateCount();
-        } catch (SQLException e) {
-            System.out.println("Error executing SQL: " + e.getMessage());
+    public int executeSQLWrite(String sql) {
+        int retryCount = 0;
+        while (retryCount < MAX_RETRIES) {
+            connectionLock.lock();
+            try {
+                connection.setAutoCommit(false);
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute(sql);
+                    int result = stmt.getUpdateCount();
+                    connection.commit();
+                    return result;
+                } catch (SQLException e) {
+                    if (e.getMessage().contains("database is locked") || e.getMessage().contains("busy")) {
+                        connection.rollback();
+                        retryCount++;
+                        if (retryCount == MAX_RETRIES) {
+                            System.out.println(ConsoleColors.RED_BOLD + "Error: Database locked after " + MAX_RETRIES
+                                    + " retries: " + e.getMessage() + ConsoleColors.RESET);
+                            break;
+                        }
+                        // Exponential backoff
+                        Thread.sleep(INITIAL_WAIT_MS * (long) Math.pow(2, retryCount - 1));
+                        continue;
+                    }
+                    connection.rollback();
+                    System.out.println(
+                            ConsoleColors.RED_BOLD + "Error executing SQL: " + e.getMessage() + ConsoleColors.RESET);
+                    break;
+                } finally {
+                    connection.setAutoCommit(true);
+                }
+            } catch (Exception e) {
+                System.out
+                        .println(ConsoleColors.RED_BOLD + "Transaction error: " + e.getMessage() + ConsoleColors.RESET);
+                break;
+            } finally {
+                connectionLock.unlock();
+            }
         }
         return 0;
+    }
+
+    /**
+     * Execute SQL for read operations - optimized for reading with shorter timeout
+     * 
+     * @param ppst PreparedStatement to execute
+     * @return ResultSet from the query, null if error occurs
+     */
+    public ResultSet executeSQLRead(PreparedStatement ppst) {
+        int retryCount = 0;
+        while (retryCount < MAX_RETRIES) {
+            try {
+                // Set read-only mode for better concurrency
+                ppst.setQueryTimeout(5); // 5 second timeout for reads
+                return ppst.executeQuery();
+            } catch (SQLException e) {
+                if (e.getMessage().contains("database is locked") || e.getMessage().contains("busy")) {
+                    retryCount++;
+                    if (retryCount == MAX_RETRIES) {
+                        System.out.println(ConsoleColors.RED_BOLD + "Error: Database locked after " + MAX_RETRIES
+                                + " retries: " + e.getMessage() + ConsoleColors.RESET);
+                        break;
+                    }
+                    try {
+                        // Shorter backoff for reads
+                        Thread.sleep(INITIAL_WAIT_MS * retryCount);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    continue;
+                }
+                System.out.println(
+                        ConsoleColors.RED_BOLD + "Error executing SQL read: " + e.getMessage() + ConsoleColors.RESET);
+                break;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Execute SQL for read operations - optimized for reading with shorter timeout
+     * 
+     * @param sql SQL query to execute
+     * @return ResultSet from the query, null if error occurs
+     */
+    public ResultSet executeSQLRead(String sql) {
+        int retryCount = 0;
+        while (retryCount < MAX_RETRIES) {
+            try (Statement stmt = connection.createStatement()) {
+                // Set read-only mode for better concurrency
+                stmt.setQueryTimeout(5); // 5 second timeout for reads
+                return stmt.executeQuery(sql);
+            } catch (SQLException e) {
+                if (e.getMessage().contains("database is locked") || e.getMessage().contains("busy")) {
+                    retryCount++;
+                    if (retryCount == MAX_RETRIES) {
+                        System.out.println(ConsoleColors.RED_BOLD + "Error: Database locked after " + MAX_RETRIES
+                                + " retries: " + e.getMessage() + ConsoleColors.RESET);
+                        break;
+                    }
+                    try {
+                        // Shorter backoff for reads
+                        Thread.sleep(INITIAL_WAIT_MS * retryCount);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    continue;
+                }
+                System.out.println(
+                        ConsoleColors.RED_BOLD + "Error executing SQL read: " + e.getMessage() + ConsoleColors.RESET);
+                break;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Legacy executeSQL method - redirects to appropriate method based on operation
+     * type
+     * 
+     * @deprecated Use executeSQLWrite or executeSQLRead instead
+     */
+    public int executeSQL(String sql) {
+        String normalizedSQL = sql.trim().toLowerCase();
+        if (normalizedSQL.startsWith("select")) {
+            try (ResultSet rs = executeSQLRead(sql)) {
+                return rs != null ? 1 : 0;
+            } catch (SQLException e) {
+                System.out.println(
+                        ConsoleColors.RED_BOLD + "Error in legacy executeSQL: " + e.getMessage() + ConsoleColors.RESET);
+                return 0;
+            }
+        } else {
+            return executeSQLWrite(sql);
+        }
     }
 
     /**
@@ -95,82 +251,98 @@ public class DatabaseEngine {
      * @param hostCategory
      * @param hostDescription
      */
-    private void createHostEntry(String hostName, String hostIp, String hostCategory, String hostDescription, int host_job_time,String host_status) {
-        executeSQL("INSERT INTO host_data (host_name, host_ip, host_category, host_description,host_status, host_job_time) VALUES ('" + hostName + "', '" + hostIp + "', '" + hostCategory + "', '" + hostDescription + "', '" + host_status + "', " + host_job_time + ");");
+    private void createHostEntry(String hostName, String hostIp, String hostCategory, String hostDescription,
+            int host_job_time, String host_status) {
+        executeSQL(
+                "INSERT INTO host_data (host_name, host_ip, host_category, host_description,host_status, host_job_time) VALUES ('"
+                        + hostName + "', '" + hostIp + "', '" + hostCategory + "', '" + hostDescription + "', '"
+                        + host_status + "', " + host_job_time + ");");
     }
 
     /**
      * Method to add a host to the database
+     * 
      * @param host
      * @return number of rows affected
      */
-    public int addHost(Host host){
-        return executeSQL("INSERT INTO host_data (host_name, host_ip, host_category, host_description,host_status, host_job_time) VALUES ('" + host.getHostName() + "', '" + host.getHostIp() + "', '" + host.getHostCategory() + "', '" + host.getHostDescription() + "', '" + host.getHostStatus() + "', " + host.getHostJobTime() + ");");
+    public int addHost(Host host) {
+        return executeSQL(
+                "INSERT INTO host_data (host_name, host_ip, host_category, host_description,host_status, host_job_time) VALUES ('"
+                        + host.getHostName() + "', '" + host.getHostIp() + "', '" + host.getHostCategory() + "', '"
+                        + host.getHostDescription() + "', '" + host.getHostStatus() + "', " + host.getHostJobTime()
+                        + ");");
     }
 
     /**
      * Method to update a host in the database
+     * 
      * @param host
      * @return number of rows affected
      */
-    public int updateHost(Host host){
-        return executeSQL("UPDATE host_data SET host_name = '" + host.getHostName() + "', host_ip = '" + host.getHostIp() + "', host_category = '" + host.getHostCategory() + "', host_description = '" + host.getHostDescription() + "', host_status = '" + host.getHostStatus() + "', host_job_time = " + host.getHostJobTime() + " WHERE host_id = " + host.getHostId() + ";");
+    public int updateHost(Host host) {
+        return executeSQL("UPDATE host_data SET host_name = '" + host.getHostName() + "', host_ip = '"
+                + host.getHostIp() + "', host_category = '" + host.getHostCategory() + "', host_description = '"
+                + host.getHostDescription() + "', host_status = '" + host.getHostStatus() + "', host_job_time = "
+                + host.getHostJobTime() + " WHERE host_id = " + host.getHostId() + ";");
     }
 
     /**
      * Method to delete a host from the database
+     * 
      * @param hostId
      * @return number of rows affected
      */
-    public int deleteHost(int hostId){
+    public int deleteHost(int hostId) {
         return executeSQL("DELETE FROM host_data WHERE host_id = " + hostId + ";");
     }
 
     /**
      * Method to delete the ping history for a host
+     * 
      * @param hostId
      * @return number of rows affected
      */
-    public int deleteHostPingHistory(int hostId){
+    public int deleteHostPingHistory(int hostId) {
         return executeSQL("DELETE FROM ping_history WHERE host_id = " + hostId + ";");
     }
 
     /**
      * Method to get all unique host statuses from the database
+     * 
      * @return ArrayList<String>
      */
-    public ArrayList<String> getAllUniqueHostStatuses(){
+    public ArrayList<String> getAllUniqueHostStatuses() {
         ArrayList<String> statuses = new ArrayList<>();
         String sql = "SELECT DISTINCT host_status FROM host_data;";
-        try (Statement stmt = connection.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
+        try (ResultSet rs = executeSQLRead(sql)) {
+            while (rs != null && rs.next()) {
                 statuses.add(rs.getString("host_status"));
             }
         } catch (SQLException e) {
-            addLog("error", "Error getting all unique host statuses: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+            addLog("error", "Error getting all unique host statuses: " + e.getMessage(), "error",
+                    ConsoleColors.RED_BOLD);
         }
         return statuses;
     }
 
     /**
      * Method to get all unique host categories from the database
+     * 
      * @return ArrayList<String>
      */
-    public ArrayList<String> getAllUniqueHostCategories(){
+    public ArrayList<String> getAllUniqueHostCategories() {
         ArrayList<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT host_category FROM host_data;";
-        try (Statement stmt = connection.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
+        try (ResultSet rs = executeSQLRead(sql)) {
+            while (rs != null && rs.next()) {
                 categories.add(rs.getString("host_category"));
             }
         } catch (SQLException e) {
-            addLog("error", "Error getting all unique host categories: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+            addLog("error", "Error getting all unique host categories: " + e.getMessage(), "error",
+                    ConsoleColors.RED_BOLD);
         }
         return categories;
     }
-
 
     /**
      * Method to create the database
@@ -235,7 +407,6 @@ public class DatabaseEngine {
                     "packet_raw_ping TEXT);");
         }
 
-
     }
 
     /**
@@ -246,8 +417,8 @@ public class DatabaseEngine {
      */
     private boolean doesTableExist(String tableName) {
         String sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "';";
-        try (Statement stmt = connection.createStatement()) {
-            return stmt.executeQuery(sql).next();
+        try (ResultSet rs = executeSQLRead(sql)) {
+            return rs != null && rs.next();
         } catch (SQLException e) {
             System.err.println("Error checking if table exists: " + e.getMessage());
             return false;
@@ -263,12 +434,18 @@ public class DatabaseEngine {
      * @param colorHex
      */
     public void addLog(String category, String data, String code, String colorHex) {
-        System.out.println(ConsoleColors.GREEN_BOLD+"["+new Timestamp(System.currentTimeMillis())+"] "+ConsoleColors.RESET+ConsoleColors.GREEN_BOLD+category+ConsoleColors.RESET+": "+ConsoleColors.GREEN_BOLD+data+ConsoleColors.RESET);
-        executeSQL("INSERT INTO app_log (host_id, log_timestamp, log_category, log_data, log_code, log_color_hex) VALUES (0, '" + new Timestamp(System.currentTimeMillis()) + "', '" + category + "', '" + data + "', '" + code + "', '" + colorHex + "');");
+        System.out.println(ConsoleColors.GREEN_BOLD + "[" + new Timestamp(System.currentTimeMillis()) + "] "
+                + ConsoleColors.RESET + ConsoleColors.GREEN_BOLD + category + ConsoleColors.RESET + ": "
+                + ConsoleColors.GREEN_BOLD + data + ConsoleColors.RESET);
+        executeSQL(
+                "INSERT INTO app_log (host_id, log_timestamp, log_category, log_data, log_code, log_color_hex) VALUES (0, '"
+                        + new Timestamp(System.currentTimeMillis()) + "', '" + category + "', '" + data + "', '" + code
+                        + "', '" + colorHex + "');");
     }
 
     /**
      * Method to add a log to the database for a specific host
+     * 
      * @param hostId
      * @param category
      * @param data
@@ -276,42 +453,48 @@ public class DatabaseEngine {
      * @param colorHex
      */
     public void addHostLog(int hostId, String category, String data, String code, String colorHex) {
-        System.out.println(ConsoleColors.BLUE_BOLD+"["+new Timestamp(System.currentTimeMillis())+"] "+ConsoleColors.RESET+ConsoleColors.BLUE_BOLD+category+ConsoleColors.RESET+": "+ConsoleColors.BLUE_BOLD+data+ConsoleColors.RESET);
-        executeSQL("INSERT INTO app_log (host_id, log_timestamp, log_category, log_data, log_code, log_color_hex) VALUES (" + hostId + ", '" + new Timestamp(System.currentTimeMillis()) + "', '" + category + "', '" + data + "', '" + code + "', '" + colorHex + "');");
+        System.out.println(ConsoleColors.BLUE_BOLD + "[" + new Timestamp(System.currentTimeMillis()) + "] "
+                + ConsoleColors.RESET + ConsoleColors.BLUE_BOLD + category + ConsoleColors.RESET + ": "
+                + ConsoleColors.BLUE_BOLD + data + ConsoleColors.RESET);
+        executeSQL(
+                "INSERT INTO app_log (host_id, log_timestamp, log_category, log_data, log_code, log_color_hex) VALUES ("
+                        + hostId + ", '" + new Timestamp(System.currentTimeMillis()) + "', '" + category + "', '" + data
+                        + "', '" + code + "', '" + colorHex + "');");
     }
 
     /**
      * Method to add ping data to the database
+     * 
      * @param pingData
      */
-    public void addPingData(PingData pingData){
-    String sql = "INSERT INTO ping_history (host_id, ping_timestamp, packet_status_code, packet_status_color_hex, packet_transmitted, packet_received, packet_hop_time1, packet_hop_time2, packet_hop_time3, packet_hop_time4, packet_hop_time5, packet_hop_time6, packet_hop_time7, packet_hop_time8, packet_round_trip_time_min, packet_round_trip_time_max, packet_round_trip_time_avg, packet_dig_data, packet_tracert_data, packet_raw_ping) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-        pstmt.setInt(1, pingData.hostId);
-        pstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-        pstmt.setString(3, pingData.packetStatusCode);
-        pstmt.setString(4, pingData.packetStatusColorHex);
-        pstmt.setInt(5, pingData.packetTransmitted);
-        pstmt.setInt(6, pingData.packetReceived);
-        pstmt.setDouble(7, pingData.packetHopTime1);
-        pstmt.setDouble(8, pingData.packetHopTime2);
-        pstmt.setDouble(9, pingData.packetHopTime3);
-        pstmt.setDouble(10, pingData.packetHopTime4);
-        pstmt.setDouble(11, pingData.packetHopTime5);
-        pstmt.setDouble(12, pingData.packetHopTime6);
-        pstmt.setDouble(13, pingData.packetHopTime7);
-        pstmt.setDouble(14, pingData.packetHopTime8);
-        pstmt.setDouble(15, pingData.packetRoundTripTimeMin);
-        pstmt.setDouble(16, pingData.packetRoundTripTimeMax);
-        pstmt.setDouble(17, pingData.packetRoundTripTimeAvg);
-        pstmt.setString(18, pingData.packetDigData);
-        pstmt.setString(19, pingData.packetTracertData);
-        pstmt.setString(20, pingData.packetRawPing);
-        pstmt.executeUpdate();
+    public void addPingData(PingData pingData) {
+        String sql = "INSERT INTO ping_history (host_id, ping_timestamp, packet_status_code, packet_status_color_hex, packet_transmitted, packet_received, packet_hop_time1, packet_hop_time2, packet_hop_time3, packet_hop_time4, packet_hop_time5, packet_hop_time6, packet_hop_time7, packet_hop_time8, packet_round_trip_time_min, packet_round_trip_time_max, packet_round_trip_time_avg, packet_dig_data, packet_tracert_data, packet_raw_ping) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, pingData.hostId);
+            pstmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+            pstmt.setString(3, pingData.packetStatusCode);
+            pstmt.setString(4, pingData.packetStatusColorHex);
+            pstmt.setInt(5, pingData.packetTransmitted);
+            pstmt.setInt(6, pingData.packetReceived);
+            pstmt.setDouble(7, pingData.packetHopTime1);
+            pstmt.setDouble(8, pingData.packetHopTime2);
+            pstmt.setDouble(9, pingData.packetHopTime3);
+            pstmt.setDouble(10, pingData.packetHopTime4);
+            pstmt.setDouble(11, pingData.packetHopTime5);
+            pstmt.setDouble(12, pingData.packetHopTime6);
+            pstmt.setDouble(13, pingData.packetHopTime7);
+            pstmt.setDouble(14, pingData.packetHopTime8);
+            pstmt.setDouble(15, pingData.packetRoundTripTimeMin);
+            pstmt.setDouble(16, pingData.packetRoundTripTimeMax);
+            pstmt.setDouble(17, pingData.packetRoundTripTimeAvg);
+            pstmt.setString(18, pingData.packetDigData);
+            pstmt.setString(19, pingData.packetTracertData);
+            pstmt.setString(20, pingData.packetRawPing);
+            pstmt.executeUpdate();
 
-        addLog("info", "Ping data added to database", "info", ConsoleColors.GREEN_BOLD);
-        
-    } catch (SQLException e) {
+            addLog("info", "Ping data added to database", "info", ConsoleColors.GREEN_BOLD);
+
+        } catch (SQLException e) {
             System.err.println("Error adding ping data: " + e.getMessage());
             addLog("error", "Error adding ping data: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
         }
@@ -319,14 +502,14 @@ public class DatabaseEngine {
 
     /**
      * Method to get all hosts from the database
+     * 
      * @return ArrayList<Host>
      */
-    public ArrayList<Host> getHosts(){
+    public ArrayList<Host> getHosts() {
         ArrayList<Host> hosts = new ArrayList<>();
         String sql = "SELECT * FROM host_data;";
-        try (Statement stmt = connection.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
+        try (ResultSet rs = executeSQLRead(sql)) {
+            while (rs != null && rs.next()) {
                 hosts.add(new Host(rs));
             }
             addLog("info", "Hosts fetched from database", "info", ConsoleColors.GREEN_BOLD);
@@ -338,27 +521,37 @@ public class DatabaseEngine {
 
     /**
      * Method to get a host by id
+     * 
      * @param hostId
      * @return Host
      */
-    public Host getHostById(int hostId){
+    public Host getHostById(int hostId) {
         String sql = "SELECT * FROM host_data WHERE host_id = " + hostId + ";";
-        try (Statement stmt = connection.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sql);
-            return new Host(rs);
+        try (ResultSet rs = executeSQLRead(sql)) {
+            if (rs != null && rs.next()) {
+                return new Host(rs);
+            }
+            addLog("warning", "No host found with ID: " + hostId, "warning", "#FFA500");
         } catch (SQLException e) {
-            addLog("error", "Error getting host by id: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+            addLog("error", "Error getting host by id " + hostId + ": " + e.getMessage(), "error", "#FF0000");
         }
         return null;
     }
+
     /**
      * Method to close the database connection
      */
-    public void closeConnection(){
+    public void closeConnection() {
+        connectionLock.lock();
         try {
-            connection.close();
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+                connected = false;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            connectionLock.unlock();
         }
     }
 }

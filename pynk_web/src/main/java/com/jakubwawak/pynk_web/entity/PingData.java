@@ -16,7 +16,7 @@ import com.jakubwawak.pynk_web.PynkWebApplication;
  * Ping data entity
  */
 public class PingData {
-    
+
     public int pingId;
     public int hostId;
     public Timestamp pingTimestamp;
@@ -70,6 +70,7 @@ public class PingData {
 
     /**
      * Constructor
+     * 
      * @param pingId
      * @param hostId
      * @param pingTimestamp
@@ -89,12 +90,12 @@ public class PingData {
      * @param packetTracertData
      */
     public PingData(int pingId, int hostId, Timestamp pingTimestamp, String packetStatusCode,
-                    String packetStatusColorHex, int packetTransmitted, int packetReceived,
-                    double packetHopTime1, double packetHopTime2, double packetHopTime3,
-                    double packetHopTime4, double packetHopTime5, double packetHopTime6,
-                    double packetHopTime7, double packetHopTime8, String packetDigData,
-                    String packetTracertData, double packetRoundTripTimeMin,
-                    double packetRoundTripTimeMax, double packetRoundTripTimeAvg, String packetRawPing) {
+            String packetStatusColorHex, int packetTransmitted, int packetReceived,
+            double packetHopTime1, double packetHopTime2, double packetHopTime3,
+            double packetHopTime4, double packetHopTime5, double packetHopTime6,
+            double packetHopTime7, double packetHopTime8, String packetDigData,
+            String packetTracertData, double packetRoundTripTimeMin,
+            double packetRoundTripTimeMax, double packetRoundTripTimeAvg, String packetRawPing) {
         this.pingId = pingId;
         this.hostId = hostId;
         this.pingTimestamp = pingTimestamp;
@@ -120,11 +121,12 @@ public class PingData {
 
     /**
      * Constructor
+     * 
      * @param resultSet
      * @throws SQLException
      */
     public PingData(ResultSet resultSet) {
-        try{
+        try {
             this.pingId = resultSet.getInt("ping_id");
             this.hostId = resultSet.getInt("host_id");
             this.pingTimestamp = resultSet.getTimestamp("ping_timestamp");
@@ -154,73 +156,87 @@ public class PingData {
 
     /**
      * Get time avg
+     * 
      * @return int
      */
-    public double getTimeAvg(){
+    public double getTimeAvg() {
         return this.packetRoundTripTimeAvg;
     }
 
     /**
      * Get time max
+     * 
      * @return double
      */
-    public double getTimeMax(){
+    public double getTimeMax() {
         return this.packetRoundTripTimeMax;
     }
 
     /**
      * Get time min
+     * 
      * @return double
      */
-    public double getTimeMin(){
+    public double getTimeMin() {
         return this.packetRoundTripTimeMin;
     }
 
     /**
      * Get host name
+     * 
      * @return String
      */
-    public String getHostName(){
-        return PynkWebApplication.databaseEngine.getHostById(this.hostId).getHostName();
+    public String getHostName() {
+        Host host = PynkWebApplication.databaseEngine.getHostById(this.hostId);
+        if (host == null) {
+            PynkWebApplication.databaseEngine.addLog("error", "Host not found for ID: " + this.hostId, "error",
+                    "#FF0000");
+            return "Unknown Host (" + this.hostId + ")";
+        }
+        return host.getHostName();
     }
 
     /**
      * Set host ID
+     * 
      * @param hostId
      */
-    public void setHostId(int hostId){
+    public void setHostId(int hostId) {
         this.hostId = hostId;
     }
 
     /**
      * Set packet raw ping
+     * 
      * @param packetRawPing
      */
-    public void setPacketRawPing(String packetRawPing){
+    public void setPacketRawPing(String packetRawPing) {
         this.packetRawPing = packetRawPing;
     }
 
     /**
      * Set ping timestamp
      */
-    public void setTime(){
+    public void setTime() {
         this.pingTimestamp = new Timestamp(System.currentTimeMillis());
     }
 
     /**
      * Get ping timestamp
+     * 
      * @return LocalDateTime
      */
-    public LocalDateTime getPingTimestamp(){
+    public LocalDateTime getPingTimestamp() {
         return this.pingTimestamp.toLocalDateTime();
     }
 
     /**
      * Set packet transmitted
+     * 
      * @param data
      */
-    public void setPacketTransmitted(String data){
-        try{
+    public void setPacketTransmitted(String data) {
+        try {
             this.packetTransmitted = Integer.parseInt(data);
         } catch (Exception e) {
             this.error = true;
@@ -230,10 +246,11 @@ public class PingData {
 
     /**
      * Set packet received
+     * 
      * @param data
      */
-    public void setPacketReceived(String data){
-        try{
+    public void setPacketReceived(String data) {
+        try {
             this.packetReceived = Integer.parseInt(data);
         } catch (Exception e) {
             this.error = true;
@@ -243,10 +260,11 @@ public class PingData {
 
     /**
      * Set packet round trip time min
+     * 
      * @param data
      */
-    public void setPacketRoundTripTimeMin(String data){
-        try{
+    public void setPacketRoundTripTimeMin(String data) {
+        try {
             this.packetRoundTripTimeMin = Double.parseDouble(data);
         } catch (Exception e) {
             this.error = true;
@@ -256,10 +274,11 @@ public class PingData {
 
     /**
      * Set packet round trip time max
+     * 
      * @param data
      */
-    public void setPacketRoundTripTimeMax(String data){
-        try{
+    public void setPacketRoundTripTimeMax(String data) {
+        try {
             this.packetRoundTripTimeMax = Double.parseDouble(data);
         } catch (Exception e) {
             this.error = true;
@@ -269,10 +288,11 @@ public class PingData {
 
     /**
      * Set packet round trip time avg
+     * 
      * @param data
      */
-    public void setPacketRoundTripTimeAvg(String data){
-        try{
+    public void setPacketRoundTripTimeAvg(String data) {
+        try {
             this.packetRoundTripTimeAvg = Double.parseDouble(data);
         } catch (Exception e) {
             this.error = true;
@@ -282,48 +302,53 @@ public class PingData {
 
     /**
      * Verify packet hop times
+     * 
      * @return boolean
      */
-    public boolean verifyPacketHopTimes(){
+    public boolean verifyPacketHopTimes() {
         return this.packetHopTime1 != -1 && this.packetHopTime2 != -1 && this.packetHopTime3 != -1 &&
-            this.packetHopTime4 != -1 && this.packetHopTime5 != -1 && this.packetHopTime6 != -1 &&
-            this.packetHopTime7 != -1 && this.packetHopTime8 != -1;
+                this.packetHopTime4 != -1 && this.packetHopTime5 != -1 && this.packetHopTime6 != -1 &&
+                this.packetHopTime7 != -1 && this.packetHopTime8 != -1;
     }
 
     /**
      * Has valid packet hop times
+     * 
      * @return boolean
      */
     public boolean hasValidPacketHopTimes() {
         return this.packetHopTime1 == -1 || this.packetHopTime2 == -1 || this.packetHopTime3 == -1 ||
-               this.packetHopTime4 == -1 || this.packetHopTime5 == -1 || this.packetHopTime6 == -1 ||
-               this.packetHopTime7 == -1 || this.packetHopTime8 == -1;
+                this.packetHopTime4 == -1 || this.packetHopTime5 == -1 || this.packetHopTime6 == -1 ||
+                this.packetHopTime7 == -1 || this.packetHopTime8 == -1;
     }
 
     /**
      * Set packet tracert data
+     * 
      * @param data
      */
-    public void setPacketTracertData(String data){
+    public void setPacketTracertData(String data) {
         this.packetTracertData = data;
     }
 
     /**
      * Set packet dig data
+     * 
      * @param data
      */
-    public void setPacketDigData(String data){
+    public void setPacketDigData(String data) {
         this.packetDigData = data;
     }
-    
+
     /**
      * Set packet hop time
+     * 
      * @param data
      * @param index
      * @return int
      */
     public void setPacketHopTime(String data, int index) {
-        try{
+        try {
             double packetHopTime = Double.parseDouble(data);
             String os = System.getProperty("os.name").toLowerCase();
             if (os.contains("nix") || os.contains("nux")) {
@@ -391,19 +416,19 @@ public class PingData {
     /**
      * Set classification
      */
-    public void setClassification(){
-        if ( this.packetReceived == 0 ){
+    public void setClassification() {
+        if (this.packetReceived == 0) {
             this.packetStatusCode = "No response";
             this.packetStatusColorHex = "#FF0000";
-        } else if ( this.packetReceived < this.packetTransmitted ){
+        } else if (this.packetReceived < this.packetTransmitted) {
             this.packetStatusCode = "Partial loss";
             this.packetStatusColorHex = "#FFA500";
         } else {
             this.packetStatusCode = "Full loss";
             this.packetStatusColorHex = "#0000FF";
         }
-        if ( this.packetReceived == this.packetTransmitted ){
-            if ( hasValidPacketHopTimes() ){
+        if (this.packetReceived == this.packetTransmitted) {
+            if (hasValidPacketHopTimes()) {
                 this.packetStatusCode = "Success";
                 this.packetStatusColorHex = "#00FF00";
             } else {
