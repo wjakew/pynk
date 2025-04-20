@@ -17,10 +17,13 @@ import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
 import com.jakubwawak.pynk_web.entity.Host;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 
 /**
@@ -31,6 +34,8 @@ public class HostAvgPingChartWrapper extends VerticalLayout {
     ComboBox<Host> hostComboBox;
     DateTimePicker startDatePicker;
     DateTimePicker endDatePicker;
+
+    Button setCurrentTimeButton;
 
     DatabaseEngine databaseEngine;
 
@@ -93,6 +98,20 @@ public class HostAvgPingChartWrapper extends VerticalLayout {
             Notification.show("End date changed to " + endDatePicker.getValue());
         });
 
+        setCurrentTimeButton = new Button("", VaadinIcon.CLOCK.create());
+        setCurrentTimeButton.addClassName("header-button");
+        setCurrentTimeButton.addThemeVariants(ButtonVariant.LUMO_ICON);
+        setCurrentTimeButton.getStyle().set("margin-top", "35px");
+        setCurrentTimeButton.getStyle().set("margin-left", "10px");
+
+        setCurrentTimeButton.addClickListener(e -> {
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Europe/Warsaw"));
+            startDatePicker.setValue(now.minusHours(1));
+            endDatePicker.setValue(now);
+            updateChart();
+            Notification.show("Time set to current");
+        });
+
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -123,7 +142,7 @@ public class HostAvgPingChartWrapper extends VerticalLayout {
         rightLayout.setWidthFull();
 
         leftLayout.add(hostComboBox);
-        rightLayout.add(startDatePicker, endDatePicker);
+        rightLayout.add(startDatePicker, endDatePicker, setCurrentTimeButton);
 
         header.add(leftLayout, rightLayout);
 
