@@ -92,6 +92,61 @@ public class DatabaseDataEngine {
     }
 
     /**
+     * Get number of successes from last 24 hours
+     * 
+     * @return number of successes from last 24 hours
+     */
+    public int getNumberOfSuccessesFrom24h() {
+        try {
+            Document result = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                    .aggregate(java.util.Arrays.asList(
+                            Aggregates.match(Filters.and(
+                                    Filters.gt("ping_timestamp",
+                                            new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                                    Filters.lt("ping_timestamp", new Date(System.currentTimeMillis())))),
+                            Aggregates.group(null, Accumulators.sum("packet_status_code", "Success"))))
+                    .first();
+
+            if (result != null) {
+                return result.getInteger("successes");
+            }
+            return 0;
+        } catch (Exception e) {
+            databaseEngine.addLog("DatabaseDataEngine", "Error getting number of successes from last 24 hours ("
+                    + e.getMessage() + ")", "ERROR", "#FF0000");
+            return 0;
+        }
+    }
+
+    /**
+     * Get number of failures from last 24 hours
+     * 
+     * @return number of failures from last 24 hours
+     */
+    public int getNumberOfFailuresFrom24h() {
+        try {
+            Document result = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                    .aggregate(java.util.Arrays.asList(
+                            Aggregates.match(Filters.and(
+                                    Filters.gt("ping_timestamp",
+                                            new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                                    Filters.lt("ping_timestamp", new Date(System.currentTimeMillis())),
+                                    Filters.ne("packet_status_code", "Success"))),
+                            Aggregates.group(null, Accumulators.sum("packet_status_code", 1))))
+                    .first();
+
+            if (result != null) {
+                return result.getInteger("failures");
+            }
+            return 0;
+        } catch (Exception e) {
+            databaseEngine.addLog("DatabaseDataEngine", "Error getting number of failures from last 24 hours ("
+                    + e.getMessage() + ")", "ERROR", "#FF0000");
+            return 0;
+        }
+    }
+
+    /**
      * Get average average ping time from last day
      * 
      * @param hostId
