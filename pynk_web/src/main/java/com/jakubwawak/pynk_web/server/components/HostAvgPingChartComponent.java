@@ -55,11 +55,13 @@ public class HostAvgPingChartComponent extends VerticalLayout {
      */
     private SOChart prepareChart() {
         DatabaseDataEngine databaseDataEngine = new DatabaseDataEngine(PynkWebApplication.databaseEngine);
+
         ArrayList<PingData> pingData = databaseDataEngine.getPingDataBetweenDates(host, startDate, endDate);
 
         SOChart soChart = new SOChart();
-        soChart.setSize("800px", "500px");
+        soChart.setSize("100%", "100%");
 
+        // average ping time
         Data xValues = new Data(), yValues = new Data();
 
         for (PingData ping : pingData) {
@@ -67,23 +69,42 @@ public class HostAvgPingChartComponent extends VerticalLayout {
             yValues.add(ping.getTimeAvg());
         }
 
-        xValues.setName("Ping Timestamp");
+        xValues.setName("Timestamp");
         yValues.setName("AvgPing Time (ms)");
 
         // Line chart is initialized with the generated XY values
         LineChart lineChart = new LineChart(xValues, yValues);
-        lineChart.setName("Ping Data for " + host.getHostName());
+        lineChart.setName("Average Ping Time (ms)");
 
         // Line chart needs a coordinate system to plot on
         // We need Number-type for both X and Y axes in this case
-        XAxis xAxis = new XAxis(DataType.NUMBER);
+        XAxis xAxis = new XAxis(DataType.DATE);
         YAxis yAxis = new YAxis(DataType.NUMBER);
         RectangularCoordinate rc = new RectangularCoordinate(xAxis, yAxis);
         lineChart.plotOn(rc);
 
-        // Add to the chart display area with a simple title
-        soChart.add(lineChart, new Title("Ping Data for " + host.getHostName()));
+        // min ping time
+        Data xValuesMin = new Data(), yValuesMin = new Data();
 
+        for (PingData ping : pingData) {
+            xValuesMin.add(ping.pingTimestamp.getTime());
+            yValuesMin.add(ping.packetRoundTripTimeMax);
+        }
+
+        xValuesMin.setName("Timestamp");
+        yValuesMin.setName("Min Ping Time (ms)");
+
+        LineChart lineChartMin = new LineChart(xValuesMin, yValuesMin);
+        lineChartMin.setName("Min Ping Time (ms)");
+
+        XAxis xAxisMin = new XAxis(DataType.DATE);
+        YAxis yAxisMin = new YAxis(DataType.NUMBER);
+        RectangularCoordinate rcMin = new RectangularCoordinate(xAxisMin, yAxisMin);
+        lineChartMin.plotOn(rcMin);
+
+        // Add to the chart display area with a simple title
+        soChart.add(lineChart, new Title("Ping Times for " + host.getHostName()));
+        soChart.add(lineChartMin);
         return soChart;
 
     }

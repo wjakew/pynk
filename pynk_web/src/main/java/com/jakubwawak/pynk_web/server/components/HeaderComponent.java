@@ -56,6 +56,7 @@ public class HeaderComponent extends HorizontalLayout {
         manageHostsButton.addClickListener(event -> {
             parent.hostManagementComponent.setVisible(!parent.hostManagementComponent.isVisible());
             parent.dataViewerComponent.setVisible(false);
+            parent.dashboardComponent.setVisible(false);
             parent.hostManagementComponent.refreshContent();
         });
 
@@ -69,6 +70,7 @@ public class HeaderComponent extends HorizontalLayout {
         dataButton.addClickListener(event -> {
             parent.dataViewerComponent.setVisible(!parent.dataViewerComponent.isVisible());
             parent.hostManagementComponent.setVisible(false);
+            parent.dashboardComponent.setVisible(false);
             // parent.dataViewerComponent.refreshContent();
         });
 
