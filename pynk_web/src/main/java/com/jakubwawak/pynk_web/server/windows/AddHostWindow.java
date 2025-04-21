@@ -25,16 +25,17 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+
 /**
  * Add host window
  */
-public class AddHostWindow extends Dialog{
-    
-    private String width = "50%";
-    private String height = "50%";
+public class AddHostWindow extends Dialog {
+
+    private String width = "80%";
+    private String height = "80%";
 
     VerticalLayout mainLayout;
-    
+
     private Host host;
 
     TextField hostName;
@@ -55,7 +56,7 @@ public class AddHostWindow extends Dialog{
     /**
      * Constructor
      */
-    public AddHostWindow(Host host,HostManagementComponent hostManager){
+    public AddHostWindow(Host host, HostManagementComponent hostManager) {
         this.host = host;
         this.hostManager = hostManager;
         databaseEngine = PynkWebApplication.databaseEngine;
@@ -68,23 +69,21 @@ public class AddHostWindow extends Dialog{
         mainLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         mainLayout.setSizeFull();
 
-        if ( host != null ){
+        if (host != null) {
             setHeaderTitle("Edit host");
             isEdit = true;
-        }
-        else{
+        } else {
             this.host = new Host();
             isEdit = false;
         }
 
-
         prepareLayout();
 
         add(mainLayout);
-        
+
     }
 
-    private void prepareLayout(){
+    private void prepareLayout() {
         hostName = new TextField("Host name");
         hostName.setPrefixComponent(VaadinIcon.PENCIL.create());
         hostName.setWidthFull();
@@ -104,7 +103,6 @@ public class AddHostWindow extends Dialog{
         hostIP.setErrorMessage("Host IP is required");
         hostIP.setRequiredIndicatorVisible(true);
         hostIP.setHelperText("Enter host IP");
-
 
         ArrayList<String> hostTypes = new ArrayList<>();
         hostTypes.add("public");
@@ -146,7 +144,7 @@ public class AddHostWindow extends Dialog{
         hostJobTime.setRequiredIndicatorVisible(true);
         hostJobTime.setHelperText("Enter time to Update");
         mainLayout.add(hostName);
-        
+
         HorizontalLayout hostIPLayout = new HorizontalLayout();
         hostIPLayout.setWidthFull();
         hostIPLayout.setAlignItems(Alignment.CENTER);
@@ -160,12 +158,12 @@ public class AddHostWindow extends Dialog{
 
         mainLayout.add(hostJobTime);
 
-        saveButton = new Button("Save", VaadinIcon.CHECK.create(),this::saveHost);
+        saveButton = new Button("Save", VaadinIcon.CHECK.create(), this::saveHost);
         saveButton.addClassName("header-button");
         saveButton.setWidthFull();
         saveButton.setIcon(VaadinIcon.CHECK.create());
 
-        if ( isEdit ){
+        if (isEdit) {
             hostName.setValue(host.getHostName());
             hostIP.setValue(host.getHostIp());
             hostType.setValue(host.getHostCategory());
@@ -179,48 +177,45 @@ public class AddHostWindow extends Dialog{
 
     /**
      * Validate fields
+     * 
      * @return true if fields are valid, false otherwise
      */
-    private boolean validateFields(){
+    private boolean validateFields() {
         return !hostName.getValue().isEmpty() && !hostIP.getValue().isEmpty()
-        && !hostType.getValue().isEmpty() && !hostStatus.getValue().isEmpty() && hostJobTime.getValue() != null;
+                && !hostType.getValue().isEmpty() && !hostStatus.getValue().isEmpty() && hostJobTime.getValue() != null;
     }
 
     /**
      * Save host
      */
-    private void saveHost(ClickEvent<Button> event){
-        if ( validateFields() ){
+    private void saveHost(ClickEvent<Button> event) {
+        if (validateFields()) {
             host.setHostName(hostName.getValue());
             host.setHostIp(hostIP.getValue());
             host.setHostCategory(hostType.getValue());
             host.setHostStatus(hostStatus.getValue());
             host.setHostJobTime(hostJobTime.getValue());
 
-            if ( isEdit ){
+            if (isEdit) {
                 int ans = databaseEngine.updateHost(host);
-                if ( ans > 0 ){
+                if (ans > 0) {
                     Notification.show("Host updated successfully", 3000, Notification.Position.BOTTOM_CENTER);
                     hostManager.refreshContent();
                     close();
-                }
-                else{
+                } else {
                     Notification.show("Failed to update host", 3000, Notification.Position.BOTTOM_CENTER);
                 }
-            }
-            else{
+            } else {
                 int ans = databaseEngine.addHost(host);
-                if ( ans > 0 ){
+                if (ans > 0) {
                     Notification.show("Host added successfully", 3000, Notification.Position.BOTTOM_CENTER);
                     hostManager.refreshContent();
                     close();
-                }
-                else{
+                } else {
                     Notification.show("Failed to add host", 3000, Notification.Position.BOTTOM_CENTER);
                 }
             }
-        }
-        else{
+        } else {
             Notification.show("Please fill all fields", 3000, Notification.Position.BOTTOM_CENTER);
         }
     }

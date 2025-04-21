@@ -188,7 +188,7 @@ public class DataViewerComponent extends VerticalLayout {
 
         H5 timeRangeLabelTo = new H5("to:");
         timeRangeLabelTo.addClassName("logo");
-        timeRangeLabelTo.getStyle().set("margin-right", "5px");
+        timeRangeLabelTo.getStyle().set("margin-right", "10px");
         timeRangeLabelTo.getStyle().set("font-size", "1.5rem");
 
         leftLayout.add(logo, logo);

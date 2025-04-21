@@ -37,7 +37,6 @@ vaadin-integer-field{
     font-family: monospace;
     --vaadin-input-field-focused-label-color: var(--pink-color);
 }
-
 vaadin-date-time-picker::part(label){
     font-family: monospace;
     color: var(--pink-color);
@@ -46,12 +45,17 @@ vaadin-date-time-picker{
     font-family: monospace;
     color: var(--pink-color);
 }
-
-
 vaadin-date-time-picker[focused]::part(input-field){
     border-color: var(--pink-color);
 }
-
+vaadin-tab{
+    font-family: monospace;
+    color: var(--pink-color);
+}
+vaadin-tab::part(label){
+    font-family: monospace;
+    color: var(--pink-color);
+}
 /*pages*/
 .page {
     background-color: white;
@@ -66,7 +70,4 @@ vaadin-date-time-picker[focused]::part(input-field){
     background-color: var(--pink-color);
     color: white;
     font-family: var(--header-font);
-}
-.header{
-
 }

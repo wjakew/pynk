@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class PynkWebApplication extends SpringBootServletInitializer implements AppShellConfigurator {
 
 	public static String VERSION = "1.0.0";
-	public static String BUILD = "pynkweb19042025";
+	public static String BUILD = "pynkweb21042025REV1";
 
 	public static DatabaseEngine databaseEngine;
 	public static Properties properties;
