@@ -189,7 +189,8 @@ The system maintains detailed logs in MongoDB for:
 ###  With docker-compose
 TBA
 ### From Release
-1. Make sure You have a MongoDB instance with connection-string.
+1. Make sure You have a MongoDB instance with connection-string:
+    - to install mongodb use docker image: `sudo docker pull mongodb/mongodb-community-server:latest` and run the database with `sudo docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest`
 2. Copy the newest release.
 3. Run the `pynk_service.jar` with command `java -jar pynk_service.jar` - it create default .properties file.
 4. Run the `pynk_service` in the background - make sure the PingEngine started - check logs.
