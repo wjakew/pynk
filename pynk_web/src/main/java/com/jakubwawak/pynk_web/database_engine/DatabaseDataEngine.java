@@ -252,6 +252,50 @@ public class DatabaseDataEngine {
         }
 
         /**
+         * Get average packet round trip time from last 24 hours for all hosts
+         * 
+         * @return average packet round trip time
+         */
+        public double getAveragePacketRoundTripTimeFrom24hAllHosts() {
+            try {
+                MongoCollection<Document> collection = databaseEngine
+                        .getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                
+                List<Document> results = collection.find(Filters.and(
+                        Filters.gt("ping_timestamp", new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))
+                )).into(new ArrayList<>());
+
+                if (results.isEmpty()) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "No data found for any host in last 24 hours",
+                                "INFO", "#00FF00");
+                    return 0.0;
+                }
+
+                double sum = 0.0;
+                int count = 0;
+                for (Document doc : results) {
+                    Double roundTripTime = doc.getDouble("packet_round_trip_time_avg");
+                    if (roundTripTime != null) {
+                        sum += roundTripTime;
+                        count++;
+                    }
+                }
+                databaseEngine.addLog("DatabaseDataEngine",
+                        "Average packet round trip time from last 24 hours for all hosts is " + sum / count,
+                        "INFO", "#00FF00");
+                return count > 0 ? sum / count : 0.0;
+            } catch (Exception e) {
+                databaseEngine.addLog("DatabaseDataEngine",
+                        "Error getting average packet round trip time from last 24 hours for all hosts ("
+                                + e.getMessage() + ")",
+                        "ERROR", "#FF0000");
+                return 0.0;
+            }
+        }
+
+        /**
          * Get host statistics
          * 
          * @return host statistics

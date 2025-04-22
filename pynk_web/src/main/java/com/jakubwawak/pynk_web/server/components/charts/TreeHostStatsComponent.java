@@ -60,7 +60,7 @@ public class TreeHostStatsComponent extends VerticalLayout {
         }
         rootData.add(localData);
 
-        TreeData internetData = new TreeData("Internet", 1000);
+        TreeData internetData = new TreeData("Internet", databaseDataEngine.getAveragePacketRoundTripTimeFrom24hAllHosts());
         for (Document doc : hostStatistics) {
             if (doc.getString("hostName") != null && doc.getDouble("avgPingTime") != null) {
                 internetData.add(new TreeData(doc.getString("hostName"), doc.getDouble("avgPingTime")));

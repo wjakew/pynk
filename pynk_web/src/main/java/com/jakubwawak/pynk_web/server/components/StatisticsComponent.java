@@ -28,8 +28,6 @@ public class StatisticsComponent extends VerticalLayout {
 
     HorizontalLayout centerLayout;
 
-    ConnectionStatisticsChartComponent connectionStatisticsChartComponent;
-
     /**
      * Constructor
      */
@@ -104,10 +102,8 @@ public class StatisticsComponent extends VerticalLayout {
         centerLayout.setWidthFull();
         centerLayout.setHeight("70%");
 
-        connectionStatisticsChartComponent = new ConnectionStatisticsChartComponent();
+        ConnectionStatisticsChartComponent connectionStatisticsChartComponent = new ConnectionStatisticsChartComponent();
         centerLayout.add(connectionStatisticsChartComponent);
-
-        add(centerLayout);
     }
 
     /**
@@ -116,11 +112,12 @@ public class StatisticsComponent extends VerticalLayout {
     public void prepareLayout(){
         removeAll();
         add(topLayout);
+        prepareCenterLayout();
         add(centerLayout);
 
         TreeHostStatsComponent treeHostStatsComponent = new TreeHostStatsComponent();
         add(treeHostStatsComponent);
-        
+
         Notification.show("StatisticsComponent updated!");
     }
 

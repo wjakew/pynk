@@ -6,6 +6,7 @@
 package com.jakubwawak.pynk_web.server.components;
 
 import com.jakubwawak.pynk_web.server.pages.MainPage;
+import com.jakubwawak.pynk_web.server.windows.InformationWindow;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Image;
@@ -87,6 +88,12 @@ public class HeaderComponent extends HorizontalLayout {
         Image logoImage = new Image(res, "pynk-logo");
         logoImage.setWidth("50px");
         logoImage.setHeight("50px");
+
+        logoImage.addClickListener(event -> {
+            InformationWindow informationWindow = new InformationWindow();
+            add(informationWindow);
+            informationWindow.open();
+        });
 
         FlexLayout leftLayout = new FlexLayout();
         leftLayout.setSizeFull();
