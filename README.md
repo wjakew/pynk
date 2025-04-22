@@ -190,7 +190,13 @@ The system maintains detailed logs in MongoDB for:
 TBA
 ### From Release
 1. Make sure You have a MongoDB instance with connection-string:
-    - to install mongodb use docker image: `sudo docker pull mongodb/mongodb-community-server:latest` and run the database with `sudo docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest`
+    - make sure that docker is added to sudo: `sudo groupadd docker` and `sudo usermod -aG docker $USER` - then restart host machine.
+    - to install mongodb use docker image: `docker pull mongodb/mongodb-community-server:latest` and run the database with `docker run -d \
+      --name mongodb \
+      -e MONGODB_INITDB_ROOT_USERNAME=admin \
+      -e MONGODB_INITDB_ROOT_PASSWORD=adminpass \
+      -p 27017:27017 \
+      mongo`
 2. Copy the newest release.
 3. Run the `pynk_service.jar` with command `java -jar pynk_service.jar` - it create default .properties file.
 4. Run the `pynk_service` in the background - make sure the PingEngine started - check logs.
