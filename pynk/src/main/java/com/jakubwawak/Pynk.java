@@ -19,8 +19,8 @@ import com.jakubwawak.maintanance.Properties;
  */
 public class Pynk {
 
-    public static final String VERSION = "1.1.0";
-    public static final String BUILD = "pynk20042025REV01";
+    public static final String VERSION = "1.1.1";
+    public static final String BUILD = "pynk22042025REV01";
     public static final boolean debug = false;
 
     public static DatabaseEngine databaseEngine;
@@ -176,9 +176,13 @@ public class Pynk {
         private final ConcurrentHashMap<org.bson.types.ObjectId, Thread> jobThreads = new ConcurrentHashMap<>();
         private volatile boolean running = true;
         private final int refreshInterval = 5000; // 5 seconds
+        private final int reconnectInterval = 21600000; // 6 hours in milliseconds
 
         @Override
         public void run() {
+            // Start a separate thread for reconnecting to the database
+            new Thread(this::reconnectDatabase).start();
+
             while (running && !Thread.currentThread().isInterrupted()) {
                 try {
                     // Get updated host list from MongoDB
@@ -244,6 +248,25 @@ public class Pynk {
                         Thread.currentThread().interrupt();
                         break;
                     }
+                }
+            }
+        }
+
+        /**
+         * Reconnect to the database
+         */
+        private void reconnectDatabase() {
+            while (running) {
+                try {
+                    Thread.sleep(reconnectInterval);
+                    documentDatabaseEngine.connect(); // Attempt to reconnect
+                    documentDatabaseEngine.addLog("reconnect", "Reconnected to MongoDB", "info", "#00FF00");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    documentDatabaseEngine.addLog("error", "Error reconnecting to MongoDB: " + e.getMessage(), "error",
+                            "#FF0000");
                 }
             }
         }
