@@ -1,6 +1,10 @@
 # Pynk
 ![pynk_logo](readme_resources/logo.png)
+
+
 System for generating and analyzing network statistics.
+
+![pynk_logo](readme_resources/scr1.png)
 
 ## Description
 
@@ -24,6 +28,9 @@ pynk/
 - Concurrent job management
 - Real-time host status tracking
 - Automatic database reconnection (MongoDB)
+
+![pynk_logo](readme_resources/scr2.png)
+
 ---
 ## Architecture
 
@@ -74,6 +81,9 @@ The application implements three main thread management systems:
   1. `Job` class for SQLite implementation
   2. `DocumentJob` class for MongoDB implementation
 ---
+
+![pynk_logo](readme_resources/scr3.png)
+
 ## The engine
 
 The `PingEngine` class is a Java implementation for handling network ping operations with MongoDB integration. It provides functionality to ping hosts, perform traceroute operations, and DNS lookups (dig), while storing the results and logs in a MongoDB database.
