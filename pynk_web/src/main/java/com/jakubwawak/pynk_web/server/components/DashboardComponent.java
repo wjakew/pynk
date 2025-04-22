@@ -130,6 +130,9 @@ public class DashboardComponent extends VerticalLayout {
         viewSheets.add("Statistics", statisticsComponent);
         viewSheets.add("Host Ping History", hostAvgPingChartWrapper1);
 
+        viewSheets.addSelectedChangeListener(event->{
+            statisticsComponent.prepareLayout();
+        });
         add(viewSheets);
     }
 

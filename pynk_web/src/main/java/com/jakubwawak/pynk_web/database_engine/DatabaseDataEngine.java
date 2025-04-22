@@ -8,6 +8,7 @@ package com.jakubwawak.pynk_web.database_engine;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import com.jakubwawak.pynk_web.entity.Host;
 import com.jakubwawak.pynk_web.entity.PingData;
@@ -179,6 +180,125 @@ public class DatabaseDataEngine {
                 } catch (Exception e) {
                         databaseEngine.addLog("DatabaseDataEngine",
                                         "Error getting failures from last 24 hours ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+        /**
+         * Get number of hosts
+         * 
+         * @return number of hosts
+         */
+        public int getNumberOfHosts() {
+                try {
+                        MongoCollection<Document> collection = databaseEngine
+                                        .getCollection(DatabaseEngine.HOSTS_COLLECTION);
+                        return (int) collection.countDocuments();
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting number of hosts ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return 0;
+                }
+        }
+
+        /**
+         * Get average packet round trip time from last 24 hours for given host
+         * 
+         * @param hostId host id to get statistics for
+         * @return average packet round trip time
+         */
+        public double getAveragePacketRoundTripTimeFrom24h(ObjectId hostId) {
+            try {
+                MongoCollection<Document> collection = databaseEngine
+                        .getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                
+                List<Document> results = collection.find(Filters.and(
+                        Filters.eq("host_id", hostId),
+                        Filters.gt("ping_timestamp", new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))
+                )).into(new ArrayList<>());
+
+                if (results.isEmpty()) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "No data found for host " + hostId,
+                                "INFO", "#00FF00");
+                    return 0.0;
+                }
+
+                double sum = 0.0;
+                int count = 0;
+                for (Document doc : results) {
+                    Double roundTripTime = doc.getDouble("packet_round_trip_time_avg");
+                    if (roundTripTime != null) {
+                        sum += roundTripTime;
+                        count++;
+                    }
+                }
+                databaseEngine.addLog("DatabaseDataEngine",
+                        "Average packet round trip time from last 24 hours for host " + hostId + " is " + sum / count,
+                        "INFO", "#00FF00");
+                return count > 0 ? sum / count : 0.0;
+            } catch (Exception e) {
+                databaseEngine.addLog("DatabaseDataEngine",
+                        "Error getting average packet round trip time from last 24 hours ("
+                                + e.getMessage() + ")",
+                        "ERROR", "#FF0000");
+                return 0.0;
+            }
+        }
+
+        /**
+         * Get host statistics
+         * 
+         * @return host statistics
+         */
+        public ArrayList<Document> getPublicHostStatistics() {
+                ArrayList<Document> hostStatistics = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine.getCollection("hosts");
+                        for (Document doc : collection.find()) {
+                                if ( doc.getString("hostCategory").equals("public")) {
+                                        ObjectId hostId = doc.getObjectId("_id");
+                                        String hostName = doc.getString("hostName");
+                                        double avgPingTime = getAveragePacketRoundTripTimeFrom24h(hostId);
+                                        hostStatistics.add(new Document("hostName", hostName).append("avgPingTime", avgPingTime));
+                                }
+                        }
+                        return hostStatistics;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting host statistics ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+                /**
+         * Get host statistics
+         * 
+         * @return host statistics
+         */
+        public ArrayList<Document> getLocalHostStatistics() {
+                ArrayList<Document> hostStatistics = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine.getCollection("hosts");
+                        for (Document doc : collection.find()) {
+                                if ( doc.getString("hostCategory").equals("local")) {
+                                        ObjectId hostId = doc.getObjectId("_id");
+                                        String hostName = doc.getString("hostName");
+                                        double avgPingTime = getAveragePacketRoundTripTimeFrom24h(hostId);
+                                        hostStatistics.add(new Document("hostName", hostName).append("avgPingTime", avgPingTime));
+                                }
+                        }
+                        return hostStatistics;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting host statistics ("
                                                         + e.getMessage() + ")",
                                         "ERROR", "#FF0000");
                         return null;

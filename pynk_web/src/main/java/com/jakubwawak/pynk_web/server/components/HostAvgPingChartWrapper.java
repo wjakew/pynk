@@ -15,6 +15,7 @@ import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
 import com.jakubwawak.pynk_web.entity.Host;
+import com.jakubwawak.pynk_web.server.components.charts.HostAvgPingChartComponent;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.icon.VaadinIcon;

@@ -16,7 +16,9 @@ Pynk is a powerful tool designed to help you analyze and visualize network stati
 ## Initial configuration
 1. Your machnine should have an `traceroute` tool, you can install it by using `sudo apt install traceroute -y`
 2. Only supported host operating systems are Linux and MacOS.
--- TBA
+3. Java 17 or higher.
+4. Docker and Docker Compose tooling if you are building from docker-compose.
+5. MongoDB connection from container or standalone.
 ## Installation
 
 TBA
@@ -28,6 +30,8 @@ pynk/
 ├── README.md
 └── pynk - service for analyzing and analitics generation
 └── pynk_web - web application for data monitoring
+└── readme_resources - visual resources for readme file
+└── pynk_database_schema - database schema for pynk application
 ```
 
 ## Contributing

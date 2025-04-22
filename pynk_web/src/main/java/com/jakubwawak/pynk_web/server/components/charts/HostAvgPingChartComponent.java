@@ -3,7 +3,7 @@
  * kubawawak@gmail.com
  * all rights reserved
  */
-package com.jakubwawak.pynk_web.server.components;
+package com.jakubwawak.pynk_web.server.components.charts;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
