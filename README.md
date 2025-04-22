@@ -194,9 +194,10 @@ TBA
     - to install mongodb use docker image: `docker pull mongodb/mongodb-community-server:latest` and run the database with `docker run -d \
       --name mongodb \
       -e MONGODB_INITDB_ROOT_USERNAME=admin \
-      -e MONGODB_INITDB_ROOT_PASSWORD=adminpass \
+      -e MONGODB_INITDB_ROOT_PASSWORD=password \
       -p 27017:27017 \
       mongo`
+    - or use official docker-compose file and run `docker-compose up -d` in the root folder
 2. Copy the newest release.
 3. Run the `pynk_service.jar` with command `java -jar pynk_service.jar` - it create default .properties file.
 4. Run the `pynk_service` in the background - make sure the PingEngine started - check logs.

@@ -1,8 +1,8 @@
-version: '3.8'
+version: "3.8"
 services:
   mongo:
     image: mongo
-    container_name: mongodb
+    container_name: pynk_database
     ports:
       - "27017:27017"
     environment:
