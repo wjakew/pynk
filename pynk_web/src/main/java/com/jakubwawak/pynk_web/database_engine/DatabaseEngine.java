@@ -43,6 +43,8 @@ public class DatabaseEngine {
     public static final String PING_HISTORY_COLLECTION = "ping_data";
     public static final String APP_LOG_COLLECTION = "logs";
 
+    public static Document DEFAULT_CONFIGURATION;
+
     /**
      * Constructor to initialize the database path and connect
      * 
@@ -51,6 +53,17 @@ public class DatabaseEngine {
     public DatabaseEngine(String databasePath) {
         this.databasePath = databasePath;
         connect();
+    }
+
+    /**
+     * Method to get the default configuration
+     * 
+     * @return Document
+     */
+    private Document getDefaultConfiguration(){
+        Document doc = new Document();
+        doc.append("allow_ping_history_deletion", false);
+        return doc;
     }
 
     /**
@@ -68,6 +81,7 @@ public class DatabaseEngine {
                 database = mongoClient.getDatabase("db_pynk");
                 connected = true;
                 addLog("info", "Connected to MongoDB", "info", ConsoleColors.GREEN_BOLD);
+                createConfigurationEntry();
             } finally {
                 connectionLock.unlock();
             }
@@ -75,6 +89,49 @@ public class DatabaseEngine {
             connected = false;
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Method to create a configuration entry in the database
+     */
+    public void createConfigurationEntry(){
+        Document doc = getDefaultConfiguration();
+        try {
+            MongoCollection<Document> configCollection = getCollection("configuration");
+            if (configCollection.countDocuments() > 0) {
+                addLog("info", "Configuration entry already exists - loading it", "info", ConsoleColors.YELLOW_BOLD);
+                DEFAULT_CONFIGURATION = configCollection.find().first();
+            } else {
+                addLog("info", "Configuration entry created successfully", "info", ConsoleColors.GREEN_BOLD);
+                configCollection.insertOne(doc);
+            }
+        } catch (Exception e) {
+            addLog("error", "Error creating/updating configuration entry: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+    }
+
+    /**
+     * Method to update the configuration entry in the database
+     * 
+     * @param doc
+     */
+    public void updateConfigurationEntry(Document doc){
+        try {
+            getCollection("configuration").updateOne(new Document(), new Document("$set", doc));
+            addLog("info", "Configuration entry updated successfully", "info", ConsoleColors.GREEN_BOLD);
+        } catch (Exception e) {
+            addLog("error", "Error updating configuration entry: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+    }
+
+    /**
+     * Method to set the allow ping history deletion in the configuration entry
+     * 
+     * @param allowPingHistoryDeletion
+     */
+    public void setConfigurationAllowPingHistoryDeletion(boolean allowPingHistoryDeletion){
+        DEFAULT_CONFIGURATION.put("allow_ping_history_deletion", allowPingHistoryDeletion);
+        updateConfigurationEntry(DEFAULT_CONFIGURATION);
     }
 
     /**
@@ -217,6 +274,23 @@ public class DatabaseEngine {
             addLog("error", "Error getting unique host categories: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
         }
         return categories;
+    }
+
+    /**
+     * Method to get app log data between dates
+     * 
+     * @param startDate
+     * @param endDate
+     * @return ArrayList<Document>
+     */
+    public ArrayList<Document> getAppLogDataBetweenDates(Timestamp startDate, Timestamp endDate) {
+        ArrayList<Document> logs = new ArrayList<>();
+        try {
+            getCollection(APP_LOG_COLLECTION).find(Filters.and(Filters.gte("log_timestamp", startDate), Filters.lte("log_timestamp", endDate))).into(logs);
+        } catch (Exception e) {
+            addLog("error", "Error getting app log data between dates: " + e.getMessage(), "error", ConsoleColors.RED_BOLD);
+        }
+        return logs;
     }
 
     /**

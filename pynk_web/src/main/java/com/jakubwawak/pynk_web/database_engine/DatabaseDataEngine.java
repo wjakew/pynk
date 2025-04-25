@@ -16,6 +16,8 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.result.DeleteResult;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -99,6 +101,45 @@ public class DatabaseDataEngine {
                 }
         }
 
+        /**
+         * Remove ping data between dates
+         * 
+         * @param startDate
+         * @param endDate
+         * @return true if successful, false otherwise
+         */
+        public int removePingDataBetweenDates(Timestamp startDate, Timestamp endDate) {
+                try {
+                        DeleteResult result =databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                                        .deleteMany(Filters.and(
+                                                        Filters.gt("ping_timestamp", new Date(startDate.getTime())),
+                                                        Filters.lt("ping_timestamp", new Date(endDate.getTime()))));
+                        return (int) result.getDeletedCount();
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error removing ping data between dates " + e.getMessage(),
+                                        "ERROR", "#FF0000");
+                        return -1;
+                }
+        }
+
+        /**
+         * Remove ping data older than 3 months ago
+         * 
+         * @return true if successful, false otherwise
+         */
+        public int removePingOlderThan3MonthsAgo() {
+                try {
+                        DeleteResult result = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION)
+                                        .deleteMany(Filters.lt("ping_timestamp", new Date(System.currentTimeMillis() - 90 * 24 * 60 * 60 * 1000)));
+                        return (int) result.getDeletedCount();
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error removing ping data older than 3 months ago " + e.getMessage(),
+                                        "ERROR", "#FF0000");
+                        return -1;
+                }
+        }
         /**
          * Get number of successes from last 24 hours
          * 
