@@ -63,6 +63,7 @@ public class DatabaseEngine {
     private Document getDefaultConfiguration(){
         Document doc = new Document();
         doc.append("allow_ping_history_deletion", false);
+        doc.append("last_ping_history_deletion", new Date());
         return doc;
     }
 
@@ -131,7 +132,28 @@ public class DatabaseEngine {
      */
     public void setConfigurationAllowPingHistoryDeletion(boolean allowPingHistoryDeletion){
         DEFAULT_CONFIGURATION.put("allow_ping_history_deletion", allowPingHistoryDeletion);
+        if (allowPingHistoryDeletion){
+            DEFAULT_CONFIGURATION.put("last_ping_history_deletion", new Date());
+        }
         updateConfigurationEntry(DEFAULT_CONFIGURATION);
+    }
+
+    /**
+     * Method to get the allow ping history deletion from the configuration entry
+     * 
+     * @return boolean
+     */
+    public boolean getConfigurationAllowPingHistoryDeletion(){
+        return DEFAULT_CONFIGURATION.getBoolean("allow_ping_history_deletion");
+    }
+
+    /**
+     * Method to get the last ping history deletion from the configuration entry
+     * 
+     * @return Date
+     */
+    public Date getConfigurationLastPingHistoryDeletion(){
+        return DEFAULT_CONFIGURATION.getDate("last_ping_history_deletion");
     }
 
     /**

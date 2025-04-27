@@ -16,6 +16,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
@@ -211,7 +212,8 @@ public class DatabaseDataEngine {
                         for (Document doc : collection.find(Filters.and(
                                         Filters.gt("ping_timestamp",
                                                         new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
-                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
+                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))
+                                        .sort(Sorts.descending("ping_timestamp"))) {
 
                                 if (!doc.getString("packet_status_code").equals("Success")) {
                                         pingData.add(new PingData(doc));
@@ -226,7 +228,6 @@ public class DatabaseDataEngine {
                         return null;
                 }
         }
-
         /**
          * Get number of hosts
          * 

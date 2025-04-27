@@ -27,7 +27,18 @@ vaadin-grid-cell-content{
 }
 vaadin-text-field{
     font-family: monospace;
+}
+vaadin-checkbox{
+    font-family: monospace;
+}
+vaadin-checkbox[focused]{
+    --vaadin-checkbox-checkmark-color: white;
     --vaadin-input-field-focused-label-color: var(--pink-color);
+    --vaadin-checkbox-background: var(--pink-color);
+    font-family: monospace;
+}
+vaadin-checkbox[checked]{
+    --vaadin-checkbox-background: var(--pink-color);
 }
 vaadin-combo-box{
     font-family: monospace;

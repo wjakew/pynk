@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
 import com.jakubwawak.pynk_web.database_engine.DatabaseEngine;
+import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.maintanance.Properties;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.AppShellSettings;
@@ -23,6 +24,10 @@ import jakarta.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import org.bson.Document;
 
 /**
  * Web application for Pynk data visualization
@@ -32,12 +37,13 @@ import java.util.concurrent.TimeUnit;
 @Theme(value = "pynktheme")
 public class PynkWebApplication extends SpringBootServletInitializer implements AppShellConfigurator {
 
-	public static String VERSION = "1.0.0";
+	public static String VERSION = "1.1.0";
 	public static String BUILD = "pynkweb21042025REV1";
 
 	public static DatabaseEngine databaseEngine;
 	public static Properties properties;
 	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private static final ScheduledExecutorService pingCleanupScheduler = Executors.newScheduledThreadPool(1);
 
 	@Bean
 	@Scope("singleton")
@@ -56,6 +62,7 @@ public class PynkWebApplication extends SpringBootServletInitializer implements 
 		if (properties.fileExists) {
 			properties.parsePropertiesFile();
 			initializeDatabase();
+			schedulePingHistoryCleanup();
 			SpringApplication.run(PynkWebApplication.class);
 		} else {
 			System.out.println("Properties file not found, creating default file");
@@ -132,6 +139,38 @@ public class PynkWebApplication extends SpringBootServletInitializer implements 
 		}, 1, 1, TimeUnit.HOURS);
 	}
 
+	/**
+	 * Schedule automatic ping history cleanup
+	 */
+	private static void schedulePingHistoryCleanup() {
+		pingCleanupScheduler.scheduleAtFixedRate(() -> {
+			try {
+				if (databaseEngine.connected && databaseEngine.getConfigurationAllowPingHistoryDeletion()) {
+					Date lastDeletion = databaseEngine.getConfigurationLastPingHistoryDeletion();
+					Date ninetyDaysAgo = new Date(System.currentTimeMillis() - 90L * 24 * 60 * 60 * 1000);
+					
+					if (lastDeletion == null || lastDeletion.before(ninetyDaysAgo)) {
+						// Delete ping data older than 90 days
+						DatabaseDataEngine dataEngine = new DatabaseDataEngine(databaseEngine);
+						int deletedCount = dataEngine.removePingOlderThan3MonthsAgo();
+						
+						if (deletedCount >= 0) {
+							// Update the configuration with current date
+							Document config = databaseEngine.DEFAULT_CONFIGURATION;
+							config.put("last_ping_history_deletion", new Date());
+							databaseEngine.updateConfigurationEntry(config);
+							databaseEngine.addLog("ping-cleanup", "Successfully cleaned up " + deletedCount + " ping history records older than 90 days", "info", "#0000FF");
+						} else {
+							databaseEngine.addLog("ping-cleanup-error", "Failed to clean up ping history", "error", "#FF0000");
+						}
+					}
+				}
+			} catch (Exception e) {
+				databaseEngine.addLog("ping-cleanup-error", "Error during ping history cleanup: " + e.getMessage(), "error", "#FF0000");
+			}
+		}, 1, 24, TimeUnit.HOURS);
+	}
+
 	@PreDestroy
 	public void cleanup() {
 		if (scheduler != null && !scheduler.isShutdown()) {
@@ -142,6 +181,17 @@ public class PynkWebApplication extends SpringBootServletInitializer implements 
 				}
 			} catch (InterruptedException e) {
 				scheduler.shutdownNow();
+				Thread.currentThread().interrupt();
+			}
+		}
+		if (pingCleanupScheduler != null && !pingCleanupScheduler.isShutdown()) {
+			pingCleanupScheduler.shutdown();
+			try {
+				if (!pingCleanupScheduler.awaitTermination(60, TimeUnit.SECONDS)) {
+					pingCleanupScheduler.shutdownNow();
+				}
+			} catch (InterruptedException e) {
+				pingCleanupScheduler.shutdownNow();
 				Thread.currentThread().interrupt();
 			}
 		}

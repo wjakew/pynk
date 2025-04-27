@@ -7,6 +7,7 @@ package com.jakubwawak.pynk_web.server.components;
 
 import com.jakubwawak.pynk_web.server.pages.MainPage;
 import com.jakubwawak.pynk_web.server.windows.InformationWindow;
+import com.jakubwawak.pynk_web.server.windows.SettingsWindow;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Image;
@@ -23,7 +24,7 @@ public class HeaderComponent extends HorizontalLayout {
 
     FlexLayout leftLayout, rightLayout;
 
-    Button dashboardButton, manageHostsButton, dataButton;
+    Button dashboardButton, manageHostsButton, dataButton,settingsButton;
 
     H4 logo;
 
@@ -85,6 +86,16 @@ public class HeaderComponent extends HorizontalLayout {
             parent.dataViewerComponent.setVisible(false);
         });
 
+        settingsButton = new Button("", VaadinIcon.COG.create());
+        settingsButton.addClassName("header-button");
+        settingsButton.getStyle().set("margin-left", "10px");
+
+        settingsButton.addClickListener(event -> {
+            SettingsWindow settingsWindow = new SettingsWindow();
+            add(settingsWindow);
+            settingsWindow.open();
+        });
+
         Image logoImage = new Image(res, "pynk-logo");
         logoImage.setWidth("50px");
         logoImage.setHeight("50px");
@@ -113,7 +124,7 @@ public class HeaderComponent extends HorizontalLayout {
 
         leftLayout.add(logoImage, logo);
 
-        rightLayout.add(dashboardButton, dataButton, manageHostsButton);
+        rightLayout.add(dashboardButton, dataButton, manageHostsButton, settingsButton);
 
         add(leftLayout, rightLayout);
     }
