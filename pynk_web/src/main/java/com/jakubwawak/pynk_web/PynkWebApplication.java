@@ -37,8 +37,8 @@ import org.bson.Document;
 @Theme(value = "pynktheme")
 public class PynkWebApplication extends SpringBootServletInitializer implements AppShellConfigurator {
 
-	public static String VERSION = "1.1.0";
-	public static String BUILD = "pynkweb21042025REV1";
+	public static String VERSION = "1.2.0";
+	public static String BUILD = "pynkweb27042025REV1";
 
 	public static DatabaseEngine databaseEngine;
 	public static Properties properties;

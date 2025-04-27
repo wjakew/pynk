@@ -8,11 +8,13 @@ package com.jakubwawak.pynk_web.server.components;
 import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -20,6 +22,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.entity.PingData;
 import com.jakubwawak.pynk_web.server.windows.FileDownloaderWindow;
+import com.jakubwawak.pynk_web.server.windows.PingDataDetailsWindow;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -41,6 +44,8 @@ public class LostPingComponent extends VerticalLayout{
     ArrayList<PingData> failures;
     Grid<PingData> failuresGrid;
 
+    HorizontalLayout topLayout;
+
     Button exportToCSVButton;
 
     /**
@@ -49,13 +54,46 @@ public class LostPingComponent extends VerticalLayout{
     public LostPingComponent() {
         databaseDataEngine = new DatabaseDataEngine(PynkWebApplication.databaseEngine);
         prepareFailuresGrid();
+        prepareTopLayout();
 
-
+        add(topLayout);
         add(failuresGrid);
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
+    }
+
+    /**
+     * Prepare the top layout
+     */
+    private void prepareTopLayout(){
+        topLayout = new HorizontalLayout();
+        topLayout.setWidthFull();
+        topLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        topLayout.setAlignItems(Alignment.CENTER);
+
+        FlexLayout leftLayout = new FlexLayout();
+        leftLayout.setSizeFull();
+        leftLayout.setJustifyContentMode(JustifyContentMode.START);
+        leftLayout.setAlignItems(Alignment.CENTER);
+        leftLayout.setWidthFull();
+
+        FlexLayout rightLayout = new FlexLayout();
+        rightLayout.setSizeFull();
+        rightLayout.setJustifyContentMode(JustifyContentMode.END);
+        rightLayout.setAlignItems(Alignment.CENTER);
+        rightLayout.setWidthFull();
+
+        H1 statusHeader = new H1("Lost Pings");
+        statusHeader.addClassName("logo");
+
+
+        leftLayout.add(statusHeader);
+
+        rightLayout.add(exportToCSVButton);
+        
+        topLayout.add(leftLayout, rightLayout);
     }
 
 
@@ -105,6 +143,12 @@ public class LostPingComponent extends VerticalLayout{
 
         failuresGrid.setSizeFull();
 
+        failuresGrid.addItemClickListener(item -> {
+            PingDataDetailsWindow pingDataDetailsWindow = new PingDataDetailsWindow(item.getItem());
+            add(pingDataDetailsWindow);
+            pingDataDetailsWindow.open();
+        });
+
         exportToCSVButton = new Button("Export to CSV", VaadinIcon.DOWNLOAD.create());
         exportToCSVButton.addClassName("header-button");
         exportToCSVButton.addClickListener(e -> {
@@ -145,6 +189,7 @@ public class LostPingComponent extends VerticalLayout{
         failures.clear();
         failures.addAll(databaseDataEngine.getFailuresFrom24h());
         failuresGrid.getDataProvider().refreshAll();
+        Notification.show("Failures grid refreshed!");
     }
 
 }

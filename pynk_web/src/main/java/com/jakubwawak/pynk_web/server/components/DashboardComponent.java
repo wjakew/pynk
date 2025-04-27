@@ -73,7 +73,7 @@ public class DashboardComponent extends VerticalLayout {
         successIcon.getStyle().set("margin-right", "5px");
         successIcon.getStyle().set("color", "pink");
 
-        getFailuresButton = new Button("", VaadinIcon.RECORDS.create());
+        getFailuresButton = new Button("Report", VaadinIcon.RECORDS.create());
         getFailuresButton.addClassName("header-button");
         getFailuresButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
@@ -135,6 +135,7 @@ public class DashboardComponent extends VerticalLayout {
 
         viewSheets.addSelectedChangeListener(event->{
             statisticsComponent.prepareLayout();
+            lostPingComponent.refreshFailuresGrid();
         });
         add(viewSheets);
     }
