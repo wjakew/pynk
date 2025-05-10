@@ -18,7 +18,6 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.tabs.Tabs;
 
 /**
  * DashboardComponent
@@ -133,7 +132,7 @@ public class DashboardComponent extends VerticalLayout {
         viewSheets.add("Host Ping History", hostAvgPingChartWrapper1);
         viewSheets.add("Lost Pings (last 24h)", lostPingComponent);
 
-        viewSheets.addSelectedChangeListener(event->{
+        viewSheets.addSelectedChangeListener(event -> {
             statisticsComponent.prepareLayout();
             lostPingComponent.refreshFailuresGrid();
         });

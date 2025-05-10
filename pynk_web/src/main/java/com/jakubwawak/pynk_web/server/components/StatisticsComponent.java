@@ -8,6 +8,7 @@ package com.jakubwawak.pynk_web.server.components;
 import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.server.components.charts.ConnectionStatisticsChartComponent;
+import com.jakubwawak.pynk_web.server.components.charts.HostAvgPingChartComponent;
 import com.jakubwawak.pynk_web.server.components.charts.TreeHostStatsComponent;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H6;
@@ -33,11 +34,11 @@ public class StatisticsComponent extends VerticalLayout {
      */
     public StatisticsComponent() {
         databaseDataEngine = new DatabaseDataEngine(PynkWebApplication.databaseEngine);
-        
+
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
-        
+
         prepareTopLayout();
         prepareCenterLayout();
 
@@ -47,7 +48,7 @@ public class StatisticsComponent extends VerticalLayout {
     /**
      * Prepare top layout
      */
-    void prepareTopLayout(){
+    void prepareTopLayout() {
         topLayout = new HorizontalLayout();
         topLayout.setAlignItems(Alignment.CENTER);
         topLayout.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -70,7 +71,7 @@ public class StatisticsComponent extends VerticalLayout {
 
         H1 statusHeader = new H1();
         statusHeader.addClassName("logo");
-    
+
         if (successes > 0 && failures == 0) {
             statusHeader.setText("Perfect Connectivity");
         } else if (successes > failures) {
@@ -83,11 +84,11 @@ public class StatisticsComponent extends VerticalLayout {
             statusHeader.setText("We are losing");
             statusHeader.getStyle().set("color", "#FF0000");
         }
-    
+
         leftLayout.add(new H6("Status: "), statusHeader);
 
         rightLayout.add(new H6("Hosts: " + databaseDataEngine.getNumberOfHosts()));
-        
+
         topLayout.add(leftLayout);
         topLayout.add(rightLayout);
     }
@@ -95,7 +96,7 @@ public class StatisticsComponent extends VerticalLayout {
     /**
      * Prepare center layout
      */
-    void prepareCenterLayout(){
+    void prepareCenterLayout() {
         centerLayout = new HorizontalLayout();
         centerLayout.setAlignItems(Alignment.CENTER);
         centerLayout.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -109,7 +110,7 @@ public class StatisticsComponent extends VerticalLayout {
     /**
      * Prepare layout
      */
-    public void prepareLayout(){
+    public void prepareLayout() {
         removeAll();
         add(topLayout);
         prepareCenterLayout();

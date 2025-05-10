@@ -80,5 +80,5 @@ vaadin-tab::part(label){
 .header-button{
     background-color: var(--pink-color);
     color: white;
-    font-family: var(--header-font);
+    font-family: monospace;
 }

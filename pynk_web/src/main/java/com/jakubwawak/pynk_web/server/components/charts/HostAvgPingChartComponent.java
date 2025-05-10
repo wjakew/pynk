@@ -97,8 +97,7 @@ public class HostAvgPingChartComponent extends VerticalLayout {
         LineChart lineChartMin = new LineChart(xValuesMin, yValuesMin);
         lineChartMin.setName("Min Ping Time (ms)");
 
-        RectangularCoordinate rcMin = new RectangularCoordinate(xAxis, yAxis);
-        lineChartMin.plotOn(rcMin);
+        lineChartMin.plotOn(rc);
 
         // Add to the chart display area with a simple title
         soChart.add(lineChart, new Title("Ping Times for " + host.getHostName()));
