@@ -11,6 +11,10 @@
     font-weight: normal;
     font-style: normal;
 }
+H4{
+    font-family: monospace;
+    color: var(--pink-color);
+}
 /* global variables */
 :root {
     --header-font: 'header-font', sans-serif; 

@@ -178,7 +178,6 @@ public class DataViewerComponent extends VerticalLayout {
         rightLayout.setAlignItems(Alignment.CENTER);
 
         H4 logo = new H4("data");
-        logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
         H5 timeRangeLabelFrom = new H5("from:");

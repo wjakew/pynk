@@ -36,6 +36,12 @@
         <artifactId>mongodb-driver-sync</artifactId>
         <version>5.0.0</version>
     </dependency>
+
+    <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>bson</artifactId>
+        <version>5.0.0</version>
+    </dependency>
         
     </dependencies>
 

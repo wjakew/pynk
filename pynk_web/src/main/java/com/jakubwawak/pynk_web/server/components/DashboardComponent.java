@@ -32,8 +32,6 @@ public class DashboardComponent extends VerticalLayout {
 
     HorizontalLayout lastStatisticsLayout;
 
-    Button getFailuresButton;
-
     TabSheet viewSheets;
 
     /**
@@ -55,7 +53,9 @@ public class DashboardComponent extends VerticalLayout {
     private void prepareLastStatisticsLayout() {
         DatabaseDataEngine databaseDataEngine = new DatabaseDataEngine(PynkWebApplication.getDatabaseEngine());
         int numberOfSuccessesFrom24h = databaseDataEngine.getNumberOfSuccessesFrom24h();
-        int numberOfFailuresFrom24h = databaseDataEngine.getNumberOfFailuresFrom24h();
+        int numberOfNoResponseFrom24h = databaseDataEngine.getNumberOfNoResponseFrom24h();
+        int numberOfPartialLossFrom24h = databaseDataEngine.getNumberOfPartialLossFrom24h();
+
         lastStatisticsLayout = new HorizontalLayout();
         lastStatisticsLayout.setWidth("100%");
         lastStatisticsLayout.setJustifyContentMode(JustifyContentMode.END);
@@ -65,26 +65,18 @@ public class DashboardComponent extends VerticalLayout {
         successes.getElement().getThemeList().add("badge success");
         successes.getStyle().set("margin-right", "10px");
 
-        Span failures = new Span("Ping Failed: " + String.valueOf(numberOfFailuresFrom24h));
+        Span failures = new Span("Ping No Response: " + String.valueOf(numberOfNoResponseFrom24h));
         failures.getElement().getThemeList().add("badge error");
+
+        Span partialLoss = new Span("Ping Partial Loss: " + String.valueOf(numberOfPartialLossFrom24h));
+        partialLoss.getElement().getThemeList().add("badge contrast");
+        partialLoss.getStyle().set("margin-right", "10px");
 
         Icon successIcon = VaadinIcon.CHART_LINE.create();
         successIcon.getStyle().set("margin-right", "5px");
         successIcon.getStyle().set("color", "pink");
 
-        getFailuresButton = new Button("Report", VaadinIcon.RECORDS.create());
-        getFailuresButton.addClassName("header-button");
-        getFailuresButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-
-        getFailuresButton.getStyle().set("margin-left", "10px");
-
-        getFailuresButton.addClickListener(event -> {
-            ShowFailuresReportWindow showFailuresReportWindow = new ShowFailuresReportWindow();
-            add(showFailuresReportWindow);
-            showFailuresReportWindow.open();
-        });
-
-        lastStatisticsLayout.add(successIcon, successes, failures);
+        lastStatisticsLayout.add(successIcon, successes, partialLoss, failures);
     }
 
     /**
@@ -113,13 +105,12 @@ public class DashboardComponent extends VerticalLayout {
         rightLayout.setAlignItems(Alignment.CENTER);
 
         H4 logo = new H4("dashboard");
-        logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
         leftLayout.add(logo);
 
         prepareLastStatisticsLayout();
-        rightLayout.add(lastStatisticsLayout, getFailuresButton);
+        rightLayout.add(lastStatisticsLayout);
 
         hostAvgPingChartWrapper1 = new HostAvgPingChartWrapper(null, null, null);
         statisticsComponent = new StatisticsComponent();

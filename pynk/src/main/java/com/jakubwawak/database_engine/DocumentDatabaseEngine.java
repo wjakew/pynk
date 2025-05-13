@@ -7,6 +7,7 @@ package com.jakubwawak.database_engine;
 
 import com.jakubwawak.entity.Host;
 import com.jakubwawak.entity.PingData;
+import com.jakubwawak.entity.TraceSinglePath;
 import com.jakubwawak.maintanance.ConsoleColors;
 import com.mongodb.*;
 import com.mongodb.client.MongoClient;
@@ -30,7 +31,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
+
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
  * DocumentDatabaseEngine class for managing database connections and operations
@@ -70,9 +75,17 @@ public class DocumentDatabaseEngine {
         ServerApi serverApi = ServerApi.builder()
                 .version(ServerApiVersion.V1)
                 .build();
+
+        // Create a CodecRegistry that includes POJO support
+        CodecRegistry pojoCodecRegistry = fromRegistries(
+            MongoClientSettings.getDefaultCodecRegistry(),
+            fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        );
+
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(database_url))
                 .serverApi(serverApi)
+                .codecRegistry(pojoCodecRegistry)  // Add the POJO codec registry
                 .build();
         try {
             log("DB-CONNECTION", "Connecting to database...");
@@ -256,6 +269,59 @@ public class DocumentDatabaseEngine {
                     + pingData.pingTimestamp);
         } else {
             log("DB-PING-DATA-ERROR", "Failed to add ping data for host (" + pingData.hostIdMongo + ")");
+        }
+    }
+
+    /**
+     * Function for adding hour default ping data
+     * 
+     * @param pingData
+     */
+    public void addHourDefaultPingData(PingData pingData){
+        Document hourDocument = new Document()
+            .append("ping_timestamp", pingData.pingTimestamp)
+            .append("ping_avg", pingData.packetRoundTripTimeAvg)
+            .append("ping_min", pingData.packetRoundTripTimeMin)
+            .append("ping_max", pingData.packetRoundTripTimeMax);
+        int result = insert("hour_default_ping_data", hourDocument);
+        if (result == 1) {
+            log("DB-HOUR-DEFAULT-PING-DATA", "Added hour default ping data for host (" + pingData.hostIdMongo + ")");
+        } else {
+            log("DB-HOUR-DEFAULT-PING-DATA-ERROR", "Failed to add hour default ping data for host (" + pingData.hostIdMongo + ")");
+        }
+    }
+
+    /**
+     * Function for adding trace route data
+     * 
+     * @param traceRouteData
+     */
+    public void addTraceRouteData(ArrayList<TraceSinglePath> traceRouteData, String hostName) {
+        try {
+            // Get the collection with POJO codec support
+            MongoCollection<Document> collection = mongoDatabase.getCollection("trace_route_data")
+                .withCodecRegistry(mongoDatabase.getCodecRegistry());
+
+            // Create the document with proper field access
+            Document traceRouteDataDocument = new Document()
+                .append("host_name", hostName)
+                .append("timestamp", System.currentTimeMillis())
+                .append("hops", traceRouteData.stream().map(hop -> new Document()
+                    .append("name", hop.getName())
+                    .append("ip", hop.getIp())
+                    .append("max", hop.getMax())
+                    .append("min", hop.getMin())
+                    .append("avg", hop.getAvg())
+                ).toList());
+            
+            int result = insert("trace_route_data", traceRouteDataDocument);
+            if (result == 1) {
+                log("DB-TRACE-ROUTE-DATA", "Added trace route data for host (" + hostName + ")");
+            } else {
+                log("DB-TRACE-ROUTE-DATA-ERROR", "Failed to add trace route data for host (" + hostName + ")");
+            }
+        } catch (Exception e) {
+            log("DB-TRACE-ROUTE-DATA-ERROR", "Failed to add trace route data: " + e.getMessage());
         }
     }
 

@@ -107,7 +107,6 @@ public class HostManagementComponent extends VerticalLayout {
         });
 
         H4 logo = new H4("hosts");
-        logo.addClassName("logo");
         logo.getStyle().set("margin-left", "10px");
 
         rightLayout.add(addHostButton, refreshButton);

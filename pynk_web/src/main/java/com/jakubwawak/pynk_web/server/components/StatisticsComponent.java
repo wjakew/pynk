@@ -67,17 +67,17 @@ public class StatisticsComponent extends VerticalLayout {
         rightLayout.setWidthFull();
 
         int successes = databaseDataEngine.getNumberOfSuccessesFrom24h();
-        int failures = databaseDataEngine.getNumberOfFailuresFrom24h();
+        int noResponse = databaseDataEngine.getNumberOfNoResponseFrom24h();
+        int partialLoss = databaseDataEngine.getNumberOfPartialLossFrom24h();
 
-        H1 statusHeader = new H1();
-        statusHeader.addClassName("logo");
+        H6 statusHeader = new H6();
 
-        if (successes > 0 && failures == 0) {
+        if (successes > 0 && noResponse == 0 && partialLoss == 0) {
             statusHeader.setText("Perfect Connectivity");
-        } else if (successes > failures) {
+        } else if (successes > 0 && noResponse > 0 && partialLoss == 0) {
             statusHeader.setText("Need attention");
             statusHeader.getStyle().set("color", "#FFA500");
-        } else if (successes == failures) {
+        } else if (successes > 0 && noResponse > 0 && partialLoss > 0) {
             statusHeader.setText("Warning");
             statusHeader.getStyle().set("color", "#FF0000");
         } else {

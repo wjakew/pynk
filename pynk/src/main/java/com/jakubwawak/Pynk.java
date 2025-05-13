@@ -13,14 +13,15 @@ import com.jakubwawak.database_engine.DocumentDatabaseEngine;
 import com.jakubwawak.entity.Host;
 import com.jakubwawak.maintanance.ConsoleColors;
 import com.jakubwawak.maintanance.Properties;
+import com.jakubwawak.ping_engine.TraceRouteEngine;
 
 /**
  * Service for generating network statistics
  */
 public class Pynk {
 
-    public static final String VERSION = "1.1.1";
-    public static final String BUILD = "pynk22042025REV01";
+    public static final String VERSION = "1.2.0";
+    public static final String BUILD = "pynk12052025REV01";
     public static final boolean debug = false;
 
     public static DatabaseEngine databaseEngine;
@@ -327,6 +328,61 @@ public class Pynk {
     }
 
     /**
+     * Thread class for periodic traceroute execution
+     */
+    private static class TraceRouteThread implements Runnable {
+        private final String targetHost;
+        private final int intervalMillis;
+        private volatile boolean running = true;
+        private final TraceRouteEngine traceRouteEngine;
+        private final String databaseType;
+
+        public TraceRouteThread(String targetHost, int intervalMinutes, String databaseType) {
+            this.targetHost = targetHost;
+            this.intervalMillis = intervalMinutes * 60 * 1000; // Convert minutes to milliseconds
+            this.traceRouteEngine = new TraceRouteEngine();
+            this.databaseType = databaseType;
+        }
+
+        @Override
+        public void run() {
+            while (running && !Thread.currentThread().isInterrupted()) {
+                try {
+                    // Execute traceroute
+                    logMessage("Executing traceroute for host (" + targetHost + ")", "INFO", ConsoleColors.CYAN_BOLD_BRIGHT);
+                    traceRouteEngine.executeTraceroute(targetHost);
+                    logMessage("Traceroute for host (" + targetHost + ") completed", "INFO", ConsoleColors.CYAN_BOLD_BRIGHT);
+                    // Sleep for the specified interval
+                    Thread.sleep(intervalMillis);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    logMessage("Error in trace route thread: " + e.getMessage(), "error", "#FF0000");
+                    try {
+                        Thread.sleep(intervalMillis);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void logMessage(String message, String level, String color) {
+            if (databaseType.equals("mongodb")) {
+                documentDatabaseEngine.addLog("TRACE-ROUTE-THREAD", message, level, color);
+            } else if (databaseType.equals("sqlite") && databaseEngine != null) {
+                databaseEngine.addLog("TRACE-ROUTE-THREAD", message, level, color);
+            }
+        }
+
+        public void stop() {
+            running = false;
+        }
+    }
+
+    /**
      * Main application method
      * 
      * @param args
@@ -377,10 +433,18 @@ public class Pynk {
                     documentDatabaseEngine.checkAndInitializeHostsCollection();
 
                     // Start the MongoDB host manager thread
+                    System.out.println(ConsoleColors.RED_BOLD_BRIGHT+"Starting MongoDB host manager thread"+ConsoleColors.RESET);
                     MongoHostManagerThread mongoHostManagerThread = new MongoHostManagerThread();
                     Thread mongoManagerThread = new Thread(mongoHostManagerThread);
                     mongoManagerThread.setDaemon(true);
                     mongoManagerThread.start();
+
+                    // Start the trace route thread
+                    System.out.println(ConsoleColors.RED_BOLD_BRIGHT+"Starting trace route thread"+ConsoleColors.RESET);
+                    TraceRouteThread traceRouteThread = new TraceRouteThread("8.8.8.8", 5, "mongodb"); // Execute every 5 minutes
+                    Thread traceThread = new Thread(traceRouteThread);
+                    traceThread.setDaemon(true);
+                    traceThread.start();
 
                     // Keep the main thread alive
                     while (true) {
@@ -391,7 +455,6 @@ public class Pynk {
                         }
                     }
                 }
-
             } else {
                 System.out.println("Invalid database type, please check the properties file");
                 System.exit(0);
@@ -403,7 +466,6 @@ public class Pynk {
             System.out.println("Properties file created, please configure it and run the application again");
             System.exit(0);
         }
-
     }
 
     /**

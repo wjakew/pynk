@@ -5,7 +5,9 @@
  */
 package com.jakubwawak;
 
-import com.jakubwawak.entity.Host;
+import com.jakubwawak.entity.TraceSinglePath;
+import com.jakubwawak.ping_engine.TraceRouteEngine;
+import java.util.List;
 
 /**
  * PynkTest class
@@ -17,8 +19,10 @@ public class PynkTest {
      */
     void run() {
         System.out.println("PynkTest");
-        Host host = new Host(1, "Test Host", "127.0.0.1", "Test Category", "Test Description", "active", 30000);
-        DocumentJob documentJob = new DocumentJob(host);
-        documentJob.run();
+        TraceRouteEngine tre = new TraceRouteEngine();
+        List<TraceSinglePath> hops = tre.executeTraceroute("8.8.8.8");
+        for (TraceSinglePath hop : hops) {
+            System.out.println(hop.name + " " + hop.ip + " " + hop.max + " " + hop.min + " " + hop.avg);
+        }
     }
 }

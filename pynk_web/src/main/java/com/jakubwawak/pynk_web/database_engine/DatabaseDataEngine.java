@@ -171,11 +171,39 @@ public class DatabaseDataEngine {
         }
 
         /**
+         * Get partial loss in hours
+         * 
+         * @param hours
+         * @return partial loss in hours
+         */
+        public ArrayList<PingData> getPartialLossInHours(int hours) {
+                ArrayList<PingData> pingData = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                        for (Document doc : collection.find(Filters.and(
+                                        Filters.gt("ping_timestamp",
+                                                        new Date(System.currentTimeMillis() - hours * 60 * 60 * 1000)),
+                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
+                                if (doc.getString("packet_status_code").equals("Partial loss")) {
+                                        pingData.add(new PingData(doc));
+                                }
+                        }
+                        return pingData;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting partial loss in hours ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+        /**
          * Get number of failures from last 24 hours
          * 
          * @return number of failures from last 24 hours
          */
-        public int getNumberOfFailuresFrom24h() {
+        public int getNumberOfNoResponseFrom24h() {
                 try {
                         MongoCollection<Document> collection = databaseEngine
                                         .getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
@@ -185,7 +213,64 @@ public class DatabaseDataEngine {
                                                         new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
                                         Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
 
-                                if (!doc.getString("packet_status_code").equals("Success")) {
+                                if (doc.getString("packet_status_code").equals("No response")) {
+                                        count++;
+                                }
+                        }
+                        return count;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting number of no response from last 24 hours ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return 0;
+                }
+        }
+
+        /**
+         * Get no response in hours
+         * 
+         * @param hours
+         * @return no response in hours
+         */
+        public ArrayList<PingData> getNoResponseInHours(int hours) {
+                ArrayList<PingData> pingData = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                        for (Document doc : collection.find(Filters.and(
+                                        Filters.gt("ping_timestamp",
+                                                        new Date(System.currentTimeMillis() - hours * 60 * 60 * 1000)),
+                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
+                                if (doc.getString("packet_status_code").equals("No response")) {
+                                        pingData.add(new PingData(doc));
+                                }
+                        }
+                        return pingData;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting no response in hours ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+                /**
+         * Get number of partial loss from last 24 hours
+         * 
+         * @return number of partial loss from last 24 hours
+         */
+        public int getNumberOfPartialLossFrom24h() {
+                try {
+                        MongoCollection<Document> collection = databaseEngine
+                                        .getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                        int count = 0;
+                        for (Document doc : collection.find(Filters.and(
+                                        Filters.gt("ping_timestamp",
+                                                        new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000)),
+                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
+
+                                if (doc.getString("packet_status_code").equals("Partial loss")) {
                                         count++;
                                 }
                         }
@@ -411,6 +496,37 @@ public class DatabaseDataEngine {
                 } catch (Exception e) {
                         databaseEngine.addLog("DatabaseDataEngine",
                                         "Error getting ping data from last day ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+        /**
+         * Get ping data from last hours
+         * 
+         * @param hours
+         * @return ping data from last hours
+         */
+        public ArrayList<PingData> getPingFromHoursAgo(int hours) {
+                ArrayList<PingData> pingData = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine
+                                        .getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                        for (Document doc : collection.find(Filters.and(
+                                        Filters.gt("ping_timestamp",
+                                                        new Date(System.currentTimeMillis() - hours * 60 * 60 * 1000)),
+                                        Filters.lt("ping_timestamp", new Date(System.currentTimeMillis()))))) {
+                                pingData.add(new PingData(doc));
+                        }
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "Successfully got ping data from last " + hours + " hours ("
+                                        + pingData.size() + " rows)",
+                                "INFO", "#00FF00");
+                        return pingData;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting ping data from last " + hours + " hours ("
                                                         + e.getMessage() + ")",
                                         "ERROR", "#FF0000");
                         return null;
