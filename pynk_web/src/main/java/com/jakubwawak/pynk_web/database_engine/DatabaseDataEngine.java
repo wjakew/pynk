@@ -313,6 +313,36 @@ public class DatabaseDataEngine {
                         return null;
                 }
         }
+
+        /**
+         * Get failures from given time
+         * 
+         * @param startDate
+         * @param endDate
+         * @return failures from given time
+         */
+        public ArrayList<PingData> getFailuresFromGivenTime(Timestamp startDate, Timestamp endDate) {
+                ArrayList<PingData> pingData = new ArrayList<>();
+                try {
+                        MongoCollection<Document> collection = databaseEngine.getCollection(DatabaseEngine.PING_HISTORY_COLLECTION);
+                        for (Document doc : collection.find(Filters.and(
+                                        Filters.gt("ping_timestamp", new Date(startDate.getTime())),
+                                        Filters.lt("ping_timestamp", new Date(endDate.getTime()))))) {
+                                
+                                                if (!doc.getString("packet_status_code").equals("Success")) {
+                                                        pingData.add(new PingData(doc));
+                                                }
+                        }
+                        return pingData;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                        "Error getting failures from given time ("
+                                                        + e.getMessage() + ")",
+                                        "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
         /**
          * Get number of hosts
          * 

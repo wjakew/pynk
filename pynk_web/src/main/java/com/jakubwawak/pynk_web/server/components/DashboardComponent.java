@@ -123,8 +123,8 @@ public class DashboardComponent extends VerticalLayout {
         add(headerLayout);
 
         viewSheets.add("Statistics", statisticsComponent);
-        viewSheets.add("Host Ping History", hostAvgPingChartWrapper1);
-        viewSheets.add("Lost Pings (last 24h)", lostPingComponent);
+        viewSheets.add("Ping History", hostAvgPingChartWrapper1);
+        viewSheets.add("Connection Errors", lostPingComponent);
         viewSheets.add("Host Tree", hostsDashboardComponent);
         viewSheets.addSelectedChangeListener(event -> {
             statisticsComponent.prepareLayout();

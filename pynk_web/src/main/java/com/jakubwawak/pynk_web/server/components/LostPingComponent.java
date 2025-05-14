@@ -9,6 +9,7 @@ import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H6;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -26,11 +27,13 @@ import com.jakubwawak.pynk_web.server.windows.PingDataDetailsWindow;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -47,6 +50,9 @@ public class LostPingComponent extends VerticalLayout{
     HorizontalLayout topLayout;
 
     Button exportToCSVButton;
+
+    DateTimePicker startDatePicker;
+    DateTimePicker endDatePicker;
 
     /**
      * Constructor
@@ -85,11 +91,10 @@ public class LostPingComponent extends VerticalLayout{
         rightLayout.setAlignItems(Alignment.CENTER);
         rightLayout.setWidthFull();
 
-        H1 statusHeader = new H1("Lost Pings");
-        statusHeader.addClassName("logo");
+        H6 statusHeader = new H6("Lost Pings");
 
 
-        leftLayout.add(statusHeader);
+        leftLayout.add(statusHeader, startDatePicker, endDatePicker);
 
         rightLayout.add(exportToCSVButton);
         
@@ -101,8 +106,29 @@ public class LostPingComponent extends VerticalLayout{
      * Prepare the failures grid
      */
     private void prepareFailuresGrid() {
+        startDatePicker = new DateTimePicker();
+        startDatePicker.setLabel("");
+        startDatePicker.setDatePlaceholder("Date From");
+        startDatePicker.setValue(LocalDateTime.now().minusHours(24));
+
+        startDatePicker.getStyle().set("margin-left", "10px");
+        startDatePicker.getStyle().set("margin-right", "10px");
+
+        startDatePicker.addValueChangeListener(event -> {
+            refreshFailuresGrid();
+        });
+
+        endDatePicker = new DateTimePicker();
+        endDatePicker.setLabel("");
+        endDatePicker.setDatePlaceholder("Date To");
+        endDatePicker.setValue(LocalDateTime.now());
+
+        endDatePicker.addValueChangeListener(event -> {
+            refreshFailuresGrid();
+        });
+
         DatabaseDataEngine databaseDataEngine = new DatabaseDataEngine(PynkWebApplication.databaseEngine);
-        failures = databaseDataEngine.getFailuresFrom24h();
+        failures = databaseDataEngine.getFailuresFromGivenTime(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue()));
         failuresGrid = new Grid<>(PingData.class, false);
         failuresGrid.setItems(failures);
         failuresGrid.setSizeFull();
@@ -187,7 +213,7 @@ public class LostPingComponent extends VerticalLayout{
      */
     public void refreshFailuresGrid(){
         failures.clear();
-        failures.addAll(databaseDataEngine.getFailuresFrom24h());
+        failures.addAll(databaseDataEngine.getFailuresFromGivenTime(Timestamp.valueOf(startDatePicker.getValue()), Timestamp.valueOf(endDatePicker.getValue())));
         failuresGrid.getDataProvider().refreshAll();
         Notification.show("Failures grid refreshed!");
     }
