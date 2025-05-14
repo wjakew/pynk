@@ -11,9 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.jakubwawak.database_engine.DatabaseEngine;
 import com.jakubwawak.database_engine.DocumentDatabaseEngine;
 import com.jakubwawak.entity.Host;
+import com.jakubwawak.entity.PingData;
 import com.jakubwawak.maintanance.ConsoleColors;
 import com.jakubwawak.maintanance.Properties;
+import com.jakubwawak.ping_engine.PingEngine;
 import com.jakubwawak.ping_engine.TraceRouteEngine;
+import com.jakubwawak.ping_engine.PingEngineDocument;
 
 /**
  * Service for generating network statistics
@@ -318,6 +321,9 @@ public class Pynk {
             };
         }
 
+        /**
+         * Stop the MongoDB host manager thread
+         */
         public void stop() {
             running = false;
             // Interrupt all job threads
@@ -369,6 +375,12 @@ public class Pynk {
             }
         }
 
+        /**
+         * Log message to the database
+         * @param message
+         * @param level
+         * @param color
+         */
         private void logMessage(String message, String level, String color) {
             if (databaseType.equals("mongodb")) {
                 documentDatabaseEngine.addLog("TRACE-ROUTE-THREAD", message, level, color);
@@ -377,6 +389,82 @@ public class Pynk {
             }
         }
 
+        /**
+         * Stop the trace route thread
+         */
+        public void stop() {
+            running = false;
+        }
+    }
+
+    /**
+     * Thread class for periodic ping execution and monitoring
+     */
+    private static class HourlyPingThread implements Runnable {
+        private final String targetHost;
+        private final int intervalMillis;
+        private volatile boolean running = true;
+        private final String databaseType;
+        private final PingEngineDocument pingEngine;
+
+        public HourlyPingThread(String targetHost, int intervalMinutes, String databaseType) {
+            this.targetHost = targetHost;
+            this.intervalMillis = intervalMinutes * 60 * 1000; // Convert minutes to milliseconds
+            this.databaseType = databaseType;
+            this.pingEngine = new PingEngineDocument();
+        }
+
+        @Override
+        public void run() {
+            while (running && !Thread.currentThread().isInterrupted()) {
+                try {
+                    // Execute ping and store results
+                    logMessage("Executing hourly ping for host (" + targetHost + ")", "INFO", ConsoleColors.CYAN_BOLD_BRIGHT);
+                    if (databaseType.equals("mongodb")) {
+                        // Create a temporary host object for the ping
+                        Host tempHost = new Host(0, "hourly-ping-" + targetHost, targetHost, "hourly", "Hourly ping target", "active", intervalMillis);
+                        
+                        // Execute ping and get data
+                        PingData pingData = pingEngine.pingHost(tempHost);
+                        
+                        // Store the hourly ping data
+                        documentDatabaseEngine.addHourDefaultPingData(pingData);
+                    }
+                    logMessage("Hourly ping for host (" + targetHost + ") completed", "INFO", ConsoleColors.CYAN_BOLD_BRIGHT);
+                    // Sleep for the specified interval
+                    Thread.sleep(intervalMillis);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    logMessage("Error in hourly ping thread: " + e.getMessage(), "error", "#FF0000");
+                    try {
+                        Thread.sleep(intervalMillis);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Log message to the database
+         * @param message
+         * @param level
+         * @param color
+         */
+        private void logMessage(String message, String level, String color) {
+            if (databaseType.equals("mongodb")) {
+                documentDatabaseEngine.addLog("HOURLY-PING-THREAD", message, level, color);
+            } else if (databaseType.equals("sqlite") && databaseEngine != null) {
+                databaseEngine.addLog("HOURLY-PING-THREAD", message, level, color);
+            }
+        }
+
+        /**
+         * Stop the hourly ping thread
+         */
         public void stop() {
             running = false;
         }
@@ -441,10 +529,17 @@ public class Pynk {
 
                     // Start the trace route thread
                     System.out.println(ConsoleColors.RED_BOLD_BRIGHT+"Starting trace route thread"+ConsoleColors.RESET);
-                    TraceRouteThread traceRouteThread = new TraceRouteThread("8.8.8.8", 5, "mongodb"); // Execute every 5 minutes
+                    TraceRouteThread traceRouteThread = new TraceRouteThread(properties.getValue("traceRouteTarget"), Integer.parseInt(properties.getValue("traceRouteInterval")), "mongodb"); // Execute every 5 minutes
                     Thread traceThread = new Thread(traceRouteThread);
                     traceThread.setDaemon(true);
                     traceThread.start();
+
+                    // Start the hourly ping thread
+                    System.out.println(ConsoleColors.RED_BOLD_BRIGHT+"Starting hourly ping thread"+ConsoleColors.RESET);
+                    HourlyPingThread hourlyPingThread = new HourlyPingThread(properties.getValue("pingTarget"), Integer.parseInt(properties.getValue("pingInterval")), "mongodb");
+                    Thread pingThread = new Thread(hourlyPingThread);
+                    pingThread.setDaemon(true);
+                    pingThread.start();
 
                     // Keep the main thread alive
                     while (true) {

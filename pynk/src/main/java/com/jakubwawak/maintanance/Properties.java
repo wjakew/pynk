@@ -122,6 +122,14 @@ public class Properties {
             writer.write("$databaseType=mongodb\n");
             writer.write("#allowed values: sqlite, mongodb\n");
             writer.write("$databaseUrl=mongodb://localhost:27017\n");
+            writer.write("#trace route settings\n");
+            writer.write("$traceRouteInterval=10\n");
+            writer.write("#trace route target\n");
+            writer.write("$traceRouteTarget=8.8.8.8\n");
+            writer.write("#hourly ping settings\n");
+            writer.write("$pingInterval=60\n");
+            writer.write("#hourly ping target\n");
+            writer.write("$pingTarget=8.8.8.8\n");
             writer.close();
         } catch (Exception ex) {
             error = true;
