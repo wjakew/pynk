@@ -10,6 +10,7 @@ import com.vaadin.flow.component.popover.Popover;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
 import com.jakubwawak.pynk_web.entity.PingData;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.H6;
@@ -46,11 +48,11 @@ public class DataViewerComponent extends VerticalLayout {
 
     public HorizontalLayout headerLayout;
 
-    public DateTimePicker startDatePicker;
-    public DateTimePicker endDatePicker;
-
     public Button settingsButton;
     public Popover settingsPopover;
+
+    public GridListDataView<PingData> dataView;
+
 
     /**
      * Constructor
@@ -70,40 +72,29 @@ public class DataViewerComponent extends VerticalLayout {
      */
     private void prepareContent() {
 
-        settingsButton = new Button("", VaadinIcon.COG.create());
+        DataViewerSettingsComponent settingsComponent = new DataViewerSettingsComponent(this);
+
+        settingsButton = new Button("Filtering", VaadinIcon.COG.create());
         settingsButton.addClassName("header-button");
 
-        startDatePicker = new DateTimePicker();
-        startDatePicker.setLabel("");
-        startDatePicker.setValue(LocalDateTime.now().minusHours(1));
-        startDatePicker.setVisible(false);
 
-        startDatePicker.getStyle().set("margin-right", "10px");
-
-        endDatePicker = new DateTimePicker();
-        endDatePicker.setLabel("");
-        endDatePicker.setValue(LocalDateTime.now());
-        endDatePicker.setVisible(false);
-
-        endDatePicker.getStyle().set("margin-left", "10px");
-
-        content = databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()),
-                Timestamp.valueOf(endDatePicker.getValue()));
+        content = databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(settingsComponent.startDatePicker.getValue()),
+                Timestamp.valueOf(settingsComponent.endDatePicker.getValue()));
 
         pingDataGrid = new Grid<>(PingData.class, false);
 
-        startDatePicker.addValueChangeListener(event -> {
+        settingsComponent.startDatePicker.addValueChangeListener(event -> {
             content.clear();
-            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()),
-                    Timestamp.valueOf(endDatePicker.getValue())));
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(settingsComponent.startDatePicker.getValue()),
+                    Timestamp.valueOf(settingsComponent.endDatePicker.getValue())));
             pingDataGrid.getDataProvider().refreshAll();
             Notification.show("Data refreshed - start date changed");
         });
 
-        endDatePicker.addValueChangeListener(event -> {
+        settingsComponent.endDatePicker.addValueChangeListener(event -> {
             content.clear();
-            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(startDatePicker.getValue()),
-                    Timestamp.valueOf(endDatePicker.getValue())));
+            content.addAll(databaseDataEngine.getPingDataBetweenDates(Timestamp.valueOf(settingsComponent.startDatePicker.getValue()),
+                    Timestamp.valueOf(settingsComponent.endDatePicker.getValue())));
             pingDataGrid.getDataProvider().refreshAll();
             Notification.show("Data refreshed - end date changed");
         });
@@ -149,10 +140,24 @@ public class DataViewerComponent extends VerticalLayout {
         pingDataGrid.setItems(content);
         pingDataGrid.setSizeFull();
 
-        settingsPopover = new Popover(new DataViewerSettingsComponent(this));
+        dataView = pingDataGrid.setItems(content);
+
+        settingsPopover = new Popover(settingsComponent);
         settingsPopover.setTarget(settingsButton);
-        settingsPopover.setHeight("700px");
-        settingsPopover.setWidth("300px");
+        settingsPopover.setHeight("600px");
+        settingsPopover.setWidth("550px");
+
+        dataView.addFilter(pingData -> {
+            if (settingsComponent.pingPacketStatusComboBox.getValue().equals("All")) {
+                return true;
+            }
+            return pingData.packetStatusCode.equals(settingsComponent.pingPacketStatusComboBox.getValue());
+        });
+
+        settingsComponent.pingPacketStatusComboBox.addValueChangeListener(e -> {
+            dataView.refreshAll();
+            Notification.show("Data refreshed - packet status changed");
+        });
 
     }
 
@@ -191,7 +196,7 @@ public class DataViewerComponent extends VerticalLayout {
         timeRangeLabelTo.getStyle().set("font-size", "1.5rem");
 
         leftLayout.add(logo, logo);
-        rightLayout.add(timeRangeLabelFrom, startDatePicker, timeRangeLabelTo, endDatePicker, settingsButton);
+        rightLayout.add(settingsButton);
 
         headerLayout.add(leftLayout, rightLayout);
 
@@ -199,12 +204,19 @@ public class DataViewerComponent extends VerticalLayout {
     }
 }
 
+/**
+ * DataViewerSettingsComponent - settings for DataViewerComponent
+ */
 class DataViewerSettingsComponent extends VerticalLayout {
 
     Button refreshButton;
     Button showLastHourButton;
-    Button visibleTimeRangeButton;
     Button clearTimeRangeButton;
+
+    ComboBox<String> pingPacketStatusComboBox;
+
+    DateTimePicker startDatePicker;
+    DateTimePicker endDatePicker;
 
     Button exportToCSVButton;
 
@@ -218,6 +230,26 @@ class DataViewerSettingsComponent extends VerticalLayout {
     DataViewerSettingsComponent(DataViewerComponent parent) {
         this.parent = parent;
 
+        pingPacketStatusComboBox = new ComboBox<>("Packet Status");
+        pingPacketStatusComboBox.setLabel("");
+        pingPacketStatusComboBox.setItems("Success", "Partial loss", "No response", "All");
+        pingPacketStatusComboBox.setValue("All");
+        pingPacketStatusComboBox.setWidth("100%");
+
+        startDatePicker = new DateTimePicker("");
+        startDatePicker.setLabel("");
+        startDatePicker.setValue(LocalDateTime.now().minusHours(1));
+        startDatePicker.setWidth("100%");
+
+        startDatePicker.getStyle().set("margin-right", "10px");
+
+        endDatePicker = new DateTimePicker("");
+        endDatePicker.setLabel("");
+        endDatePicker.setValue(LocalDateTime.now());
+        endDatePicker.setWidth("100%");
+
+        endDatePicker.getStyle().set("margin-left", "10px");
+
         refreshButton = new Button("Refresh", VaadinIcon.REFRESH.create());
         refreshButton.addClassName("header-button");
         refreshButton.setWidth("100%");
@@ -225,8 +257,8 @@ class DataViewerSettingsComponent extends VerticalLayout {
         refreshButton.addClickListener(event -> {
             parent.content.clear();
             parent.content.addAll(parent.databaseDataEngine.getPingDataBetweenDates(
-                    Timestamp.valueOf(parent.startDatePicker.getValue()),
-                    Timestamp.valueOf(parent.endDatePicker.getValue())));
+                    Timestamp.valueOf(startDatePicker.getValue()),
+                    Timestamp.valueOf(endDatePicker.getValue())));
             parent.pingDataGrid.getDataProvider().refreshAll();
             Notification.show("Data refreshed");
         });
@@ -236,40 +268,27 @@ class DataViewerSettingsComponent extends VerticalLayout {
         showLastHourButton.setWidth("100%");
 
         showLastHourButton.addClickListener(event -> {
-            parent.startDatePicker.setValue(LocalDateTime.now().minusHours(1));
-            parent.endDatePicker.setValue(LocalDateTime.now());
+            startDatePicker.setValue(LocalDateTime.now().minusHours(1));
+            endDatePicker.setValue(LocalDateTime.now());
             parent.content.clear();
             parent.content.addAll(parent.databaseDataEngine.getPingDataBetweenDates(
-                    Timestamp.valueOf(parent.startDatePicker.getValue()),
-                    Timestamp.valueOf(parent.endDatePicker.getValue())));
+                    Timestamp.valueOf(startDatePicker.getValue()),
+                    Timestamp.valueOf(endDatePicker.getValue())));
             parent.pingDataGrid.getDataProvider().refreshAll();
             Notification.show("Data refreshed - last hour shown");
         });
 
-        visibleTimeRangeButton = new Button("Show Time Query", VaadinIcon.CALENDAR.create());
-        visibleTimeRangeButton.addClassName("header-button");
-        visibleTimeRangeButton.setWidth("100%");
-
-        visibleTimeRangeButton.addClickListener(event -> {
-            if (parent.startDatePicker.isVisible()) {
-                parent.startDatePicker.setVisible(false);
-                parent.endDatePicker.setVisible(false);
-            } else {
-                parent.startDatePicker.setVisible(true);
-                parent.endDatePicker.setVisible(true);
-            }
-        });
 
         clearTimeRangeButton = new Button("Clear time range", VaadinIcon.ERASER.create());
         clearTimeRangeButton.addClassName("header-button");
         clearTimeRangeButton.setWidth("100%");
         clearTimeRangeButton.addClickListener(event -> {
-            parent.startDatePicker.setValue(LocalDateTime.now().minusHours(1));
-            parent.endDatePicker.setValue(LocalDateTime.now());
+            startDatePicker.setValue(LocalDateTime.now().minusHours(1));
+            endDatePicker.setValue(LocalDateTime.now());
             parent.content.clear();
             parent.content.addAll(parent.databaseDataEngine.getPingDataBetweenDates(
-                    Timestamp.valueOf(parent.startDatePicker.getValue()),
-                    Timestamp.valueOf(parent.endDatePicker.getValue())));
+                    Timestamp.valueOf(startDatePicker.getValue()),
+                    Timestamp.valueOf(endDatePicker.getValue())));
             parent.pingDataGrid.getDataProvider().refreshAll();
             Notification.show("Data refreshed - time range cleared");
         });
@@ -306,8 +325,7 @@ class DataViewerSettingsComponent extends VerticalLayout {
             }
         });
 
-        add(new H6("Settings"), refreshButton, showLastHourButton, visibleTimeRangeButton, clearTimeRangeButton,
-                exportToCSVButton);
+        add(new H6("Settings"), pingPacketStatusComboBox, new H6("Time range from"), startDatePicker, new H6("Time range to"), endDatePicker, refreshButton, showLastHourButton, clearTimeRangeButton,exportToCSVButton);
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);

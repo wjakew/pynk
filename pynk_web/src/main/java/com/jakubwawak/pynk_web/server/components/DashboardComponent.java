@@ -27,6 +27,7 @@ public class DashboardComponent extends VerticalLayout {
     HostAvgPingChartWrapper hostAvgPingChartWrapper1;
     StatisticsComponent statisticsComponent;
     LostPingComponent lostPingComponent;
+    HostsDashboardComponent hostsDashboardComponent;
 
     HorizontalLayout headerLayout;
 
@@ -116,13 +117,15 @@ public class DashboardComponent extends VerticalLayout {
         statisticsComponent = new StatisticsComponent();
         lostPingComponent = new LostPingComponent();
 
+        hostsDashboardComponent = new HostsDashboardComponent();
+
         headerLayout.add(leftLayout, rightLayout);
         add(headerLayout);
 
         viewSheets.add("Statistics", statisticsComponent);
         viewSheets.add("Host Ping History", hostAvgPingChartWrapper1);
         viewSheets.add("Lost Pings (last 24h)", lostPingComponent);
-
+        viewSheets.add("Host Tree", hostsDashboardComponent);
         viewSheets.addSelectedChangeListener(event -> {
             statisticsComponent.prepareLayout();
             lostPingComponent.refreshFailuresGrid();

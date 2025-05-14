@@ -7,8 +7,11 @@ package com.jakubwawak.pynk_web.server.components;
 
 import com.jakubwawak.pynk_web.PynkWebApplication;
 import com.jakubwawak.pynk_web.database_engine.DatabaseDataEngine;
+import com.jakubwawak.pynk_web.server.components.charts.AveragePingGaugeComponent;
 import com.jakubwawak.pynk_web.server.components.charts.ConnectionStatisticsChartComponent;
 import com.jakubwawak.pynk_web.server.components.charts.HostAvgPingChartComponent;
+import com.jakubwawak.pynk_web.server.components.charts.PingRadarChart;
+import com.jakubwawak.pynk_web.server.components.charts.TraceRouteChart;
 import com.jakubwawak.pynk_web.server.components.charts.TreeHostStatsComponent;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H6;
@@ -101,7 +104,7 @@ public class StatisticsComponent extends VerticalLayout {
         centerLayout.setAlignItems(Alignment.CENTER);
         centerLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         centerLayout.setWidthFull();
-        centerLayout.setHeight("70%");
+        centerLayout.setHeight("60%");
 
         ConnectionStatisticsChartComponent connectionStatisticsChartComponent = new ConnectionStatisticsChartComponent();
         centerLayout.add(connectionStatisticsChartComponent);
@@ -116,8 +119,23 @@ public class StatisticsComponent extends VerticalLayout {
         prepareCenterLayout();
         add(centerLayout);
 
-        TreeHostStatsComponent treeHostStatsComponent = new TreeHostStatsComponent();
-        add(treeHostStatsComponent);
+        HorizontalLayout bottomLayout = new HorizontalLayout();
+        bottomLayout.setAlignItems(Alignment.CENTER);
+        bottomLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        bottomLayout.setWidthFull();
+        bottomLayout.setHeight("40%");
+
+
+        TraceRouteChart traceRouteChart = new TraceRouteChart();
+        bottomLayout.add(traceRouteChart);
+
+        PingRadarChart pingRadarChart = new PingRadarChart();
+        bottomLayout.add(pingRadarChart);
+
+        AveragePingGaugeComponent averagePingGaugeComponent = new AveragePingGaugeComponent();
+        bottomLayout.add(averagePingGaugeComponent);
+
+        add(bottomLayout);
 
         Notification.show("StatisticsComponent updated!");
     }

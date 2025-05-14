@@ -564,4 +564,135 @@ public class DatabaseDataEngine {
                         return 0;
                 }
         }
+
+        /**
+         * Get last trace route data
+         * 
+         * @return last trace route data
+         */
+        public Document getLastTraceRouteData(){
+                try{
+                        MongoCollection<Document> collection = databaseEngine.getCollection("trace_route_data");
+                        Document result = collection.find().sort(Sorts.descending("timestamp")).first();
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "Successfully got last trace route data ("
+                                        + result.get("timestamp") + ")",
+                                "INFO", "#00FF00");
+                        return result;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "Error getting last trace route data ("
+                                        + e.getMessage() + ")",
+                                "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+        /**
+         * Get last hourly ping data
+         * 
+         * @return last hourly ping data
+         */
+        public Document getLastHourlyPingData(){
+                try{
+                        MongoCollection<Document> collection = databaseEngine.getCollection("hour_default_ping_data");
+                        Document result = collection.find().sort(Sorts.descending("ping_timestamp")).first();
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "Successfully got last hourly ping data ("
+                                        + result.get("ping_timestamp") + ")",
+                                "INFO", "#00FF00");
+                        Document parsedResult = new Document();
+                        parsedResult.append("ping_timestamp", result.get("ping_timestamp"));
+                        parsedResult.append("avg", result.get("ping_avg"));
+                        parsedResult.append("min", result.get("ping_min"));
+                        parsedResult.append("max", result.get("ping_max"));
+                        return parsedResult;
+                } catch (Exception e) {
+                        databaseEngine.addLog("DatabaseDataEngine",
+                                "Error getting last hourly ping data ("
+                                        + e.getMessage() + ")",
+                                "ERROR", "#FF0000");
+                        return null;
+                }
+        }
+
+        /**
+         * Get average ping data from the last day
+         * 
+         * @return Document containing average, min, and max ping data from the last day
+         */
+        public Document getAveragePingDataFromLastDay() {
+        try {
+                MongoCollection<Document> collection = databaseEngine.getCollection("hour_default_ping_data");
+                List<Document> results = collection.find()
+                .sort(Sorts.descending("ping_timestamp"))
+                .limit(24) // Assuming we want the last 24 hours
+                .into(new ArrayList<>());
+
+                double totalAvg = 0;
+                double totalMin = Double.MAX_VALUE;
+                double totalMax = Double.MIN_VALUE;
+                int count = 0;
+
+                for (Document result : results) {
+                        double avg = result.getDouble("ping_avg");
+                        double min = result.getDouble("ping_min");
+                        double max = result.getDouble("ping_max");
+
+                        totalAvg += avg;
+                        totalMin = Math.min(totalMin, min);
+                        totalMax = Math.max(totalMax, max);
+                        count++;
+                }
+
+                if (count > 0) {
+                totalAvg /= count; // Calculate average of averages
+                } else {
+                totalAvg = 0; // No data case
+                totalMin = 0;
+                totalMax = 0;
+                }
+
+                Document parsedResult = new Document();
+                parsedResult.append("avg", totalAvg);
+                parsedResult.append("min", totalMin);
+                parsedResult.append("max", totalMax);
+                return parsedResult;
+
+        } catch (Exception e) {
+                databaseEngine.addLog("DatabaseDataEngine",
+                        "Error getting average ping data from last day ("
+                                + e.getMessage() + ")",
+                        "ERROR", "#FF0000");
+                return null;
+        }
+        }
+
+
+        /**
+         * Function for loading last average data
+         * @return
+         */
+        public double getLastAveragePingData(){
+        try {
+            MongoCollection<Document> collection = databaseEngine.getCollection("hour_default_ping_data");
+            Document lastRecord = collection.find()
+                .sort(Sorts.descending("ping_timestamp"))
+                .first(); // Get the most recent record
+
+                if (lastRecord != null) {
+                        return lastRecord.getDouble("ping_avg"); // Return the average ping from the last record
+                } else {
+                        return 0; // No data case
+                }
+
+        } catch (Exception e) {
+        databaseEngine.addLog("DatabaseDataEngine",
+                "Error getting last average ping data ("
+                        + e.getMessage() + ")",
+                "ERROR", "#FF0000");
+        return 0; // Return 0 in case of error
+        }
+        }
 }
+

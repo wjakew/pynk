@@ -64,6 +64,8 @@ public class DatabaseEngine {
         Document doc = new Document();
         doc.append("allow_ping_history_deletion", false);
         doc.append("last_ping_history_deletion", new Date());
+        doc.append("gauge_chart_warning_threshold", 30);
+        doc.append("gauge_chart_critical_threshold", 90);
         return doc;
     }
 
