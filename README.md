@@ -187,6 +187,7 @@ The system maintains detailed logs in MongoDB for:
 
 ## Deployment
 ---
+Docker Hub: https://hub.docker.com/r/wjakew/pynk-app
 ###  With docker-compose
 #### Option 1: Docker Compose (Recommended)
 
