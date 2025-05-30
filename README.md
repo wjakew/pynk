@@ -184,10 +184,51 @@ The system maintains detailed logs in MongoDB for:
   - `databaseType`: "sqlite" or "mongodb"
   - `databasePath`: Path for SQLite database
   - `databaseUrl`: URL for MongoDB connection
+
+## Deployment
 ---
-## Installation
 ###  With docker-compose
-TBA
+#### Option 1: Docker Compose (Recommended)
+
+1. **Navigate to project directory:**
+   ```bash
+   cd pynk-deployment/
+   ```
+
+2. **Build and start the container:**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+3. **Verify deployment:**
+   ```bash
+   docker-compose ps
+   docker-compose logs -f pynk-app
+   ```
+
+#### Option 2: Direct Docker Commands
+
+1. **Build the image:**
+   ```bash
+   docker build -t pynk-app .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -d \
+     --name pynk-container \
+     -p 8080:8080 \
+     -p 27017:27017 \
+     --cap-add=NET_ADMIN \
+     --cap-add=NET_RAW \
+     --cap-add=SYS_ADMIN \
+     --dns=8.8.8.8 \
+     --dns=8.8.4.4 \
+     -v pynk_mongodb_data:/data/db \
+     -v pynk_app_logs:/var/log \
+     pynk-app
+   ```
+
 ### From Release
 1. Make sure You have a MongoDB instance with connection-string:
     - make sure that docker is added to sudo: `sudo groupadd docker` and `sudo usermod -aG docker $USER` - then restart host machine.

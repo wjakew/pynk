@@ -1,3 +1,4 @@
+com/jakubwawak/Pynk$TraceRouteThread.class
 com/jakubwawak/maintanance/PropertiesField.class
 com/jakubwawak/ping_engine/PingEngineDocument.class
 com/jakubwawak/ping_engine/PingEngine.class
@@ -10,8 +11,12 @@ com/jakubwawak/Pynk$JobManagerThread$1.class
 com/jakubwawak/entity/PingData.class
 com/jakubwawak/Pynk$HostRefreshThread.class
 com/jakubwawak/maintanance/ConsoleColors.class
+com/jakubwawak/Pynk$HourlyPingThread.class
+com/jakubwawak/entity/Trace.class
 com/jakubwawak/Pynk$MongoHostManagerThread$1.class
 com/jakubwawak/Job.class
+com/jakubwawak/entity/TraceSinglePath.class
+com/jakubwawak/ping_engine/TraceRouteEngine.class
 com/jakubwawak/Pynk$MongoHostManagerThread.class
 com/jakubwawak/maintanance/Properties.class
 com/jakubwawak/database_engine/DocumentDatabaseEngine.class

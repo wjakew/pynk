@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  pynk-app:
+    build: .
+    container_name: pynk-app
+    ports:
+      - "8080:8080"
+      - "27017:27017" # MongoDB port (optional, for external access)
+    volumes:
+      - mongodb_data:/data/db
+      - app_logs:/var/log
+    environment:
+      - MONGO_INITDB_DATABASE=pynk
+    restart: unless-stopped
+    # Allow internet access from container
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
+    networks:
+      - pynk-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ping: 1})", "--quiet"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Extended startup time for service initialization
+
+volumes:
+  mongodb_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  pynk-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
